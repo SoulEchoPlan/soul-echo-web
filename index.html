@@ -328,6 +328,18 @@
             background-color: var(--accent-hover);
         }
 
+        .user-input-area .mic-btn.recording {
+            background-color: #dc3545;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
         /* --- 7. Responsive Design --- */
         @media (max-width: 992px) {
             .main-content {
@@ -394,7 +406,7 @@
                 <!-- Chat content will be dynamically inserted here -->
             </div>
             <div class="user-input-area">
-                <button class="action-btn" aria-label="录音">
+                <button class="action-btn mic-btn" id="mic-btn" aria-label="录音">
                     <i data-feather="mic"></i>
                 </button>
                 <label>
@@ -457,11 +469,107 @@
         const characterListEl = document.getElementById('character-list');
         const chatHistoryEl = document.getElementById('chat-history');
         const characterIndicatorEl = document.getElementById('character-indicator');
+        const micBtnEl = document.getElementById('mic-btn');
         const body = document.body;
 
         // --- 3. State Management ---
         let currentTheme = 'dark';
         let activeCharacterId = characters[0].id; // Default to the first character
+
+        // --- 3.1. WebSocket Connection ---
+        let socket = null;
+        function initWebSocket() {
+            try {
+                socket = new WebSocket('ws://localhost:8080');
+                socket.onopen = function(event) {
+                    console.log('WebSocket连接已建立');
+                };
+                socket.onmessage = function(event) {
+                    console.log('收到消息:', event.data);
+                };
+                socket.onerror = function(error) {
+                    console.error('WebSocket错误:', error);
+                };
+                socket.onclose = function(event) {
+                    console.log('WebSocket连接已关闭');
+                };
+            } catch (error) {
+                console.error('WebSocket初始化失败:', error);
+            }
+        }
+
+        // --- 3.2. Microphone Streaming Module ---
+        class MicrophoneStreamer {
+            constructor() {
+                this.mediaRecorder = null;
+                this.isRecording = false;
+                this.audioStream = null;
+                this.hasPermission = false;
+            }
+
+            async initializeStream() {
+                if (this.audioStream && this.audioStream.active) {
+                    return this.audioStream;
+                }
+
+                try {
+                    this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.hasPermission = true;
+                    return this.audioStream;
+                } catch (error) {
+                    this.hasPermission = false;
+                    throw error;
+                }
+            }
+
+            async start() {
+                if (this.isRecording) {
+                    return;
+                }
+
+                try {
+                    const stream = await this.initializeStream();
+
+                    this.mediaRecorder = new MediaRecorder(stream);
+
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        if (event.data && event.data.size > 0 && socket && socket.readyState === WebSocket.OPEN) {
+                            socket.send(event.data);
+                        }
+                    };
+
+                    this.mediaRecorder.start(250);
+                    this.isRecording = true;
+
+                } catch (error) {
+                    alert('无法获取麦克风权限，请检查浏览器设置并重试。');
+                    console.error('麦克风权限请求失败:', error);
+                }
+            }
+
+            stop() {
+                if (!this.isRecording) {
+                    return;
+                }
+
+                if (this.mediaRecorder) {
+                    this.mediaRecorder.stop();
+                }
+
+                this.isRecording = false;
+            }
+
+            destroy() {
+                this.stop();
+                if (this.audioStream) {
+                    this.audioStream.getTracks().forEach(track => track.stop());
+                    this.audioStream = null;
+                }
+                this.hasPermission = false;
+            }
+        }
+
+        const microphoneStreamer = new MicrophoneStreamer();
 
         // --- 4. Functions ---
 
@@ -546,11 +654,46 @@
             }
         }
 
+        /**
+         * Updates the microphone button UI based on recording state.
+         */
+        function updateMicButtonUI() {
+            const iconEl = micBtnEl.querySelector('i');
+
+            if (microphoneStreamer.isRecording) {
+                micBtnEl.classList.add('recording');
+                iconEl.setAttribute('data-feather', 'stop-circle');
+                micBtnEl.setAttribute('aria-label', '停止录音');
+            } else {
+                micBtnEl.classList.remove('recording');
+                iconEl.setAttribute('data-feather', 'mic');
+                micBtnEl.setAttribute('aria-label', '录音');
+            }
+
+            feather.replace();
+        }
+
+        /**
+         * Handles click events on the microphone button.
+         */
+        async function handleMicButtonClick() {
+            if (microphoneStreamer.isRecording) {
+                microphoneStreamer.stop();
+            } else {
+                await microphoneStreamer.start();
+            }
+
+            updateMicButtonUI();
+        }
+
 
         // --- 5. Initialisation ---
         function init() {
             // Set initial theme based on class on body
             currentTheme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+
+            // Initialize WebSocket connection
+            initWebSocket();
 
             updateThemeSwitcherUI();
             renderCharacterList();
@@ -559,6 +702,12 @@
             // Add event listeners
             themeSwitcher.addEventListener('click', toggleTheme);
             characterListEl.addEventListener('click', handleCharacterSelect);
+            micBtnEl.addEventListener('click', handleMicButtonClick);
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                microphoneStreamer.destroy();
+            });
         }
 
         // Run the app
