@@ -101,8 +101,8 @@
             display: flex;
             flex: 1; /* Occupy remaining vertical space */
             overflow: hidden; /* Prevent scrolling on main container */
-            padding: 1.5rem;
-            gap: 1.5rem;
+            padding: 1rem;
+            gap: 1rem;
         }
 
         /* --- 4. Header Module Styling --- */
@@ -140,8 +140,9 @@
         .sidebar {
             display: flex;
             flex-direction: column;
-            width: 320px;
-            flex-shrink: 0;
+            flex: 1;
+            min-width: 280px;
+            max-width: 360px;
             background-color: var(--panel-bg);
             border-radius: 12px;
             padding: 1.25rem;
@@ -245,16 +246,24 @@
         .chat-panel {
             display: flex;
             flex-direction: column;
-            flex-grow: 1;
+            flex: 3;
             background-color: var(--panel-bg);
             border-radius: 12px;
             box-shadow: var(--shadow);
             overflow: hidden;
         }
 
+        .character-indicator {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
         .chat-history {
             flex-grow: 1;
-            padding: 2rem;
+            padding: 1.5rem;
             overflow-y: auto;
         }
 
@@ -269,6 +278,7 @@
             border-radius: 10px;
             line-height: 1.7;
             font-size: 1.1rem;
+            width: fit-content;
             max-width: 80%;
         }
 
@@ -277,12 +287,16 @@
             align-items: center;
             padding: 1rem 1.5rem;
             border-top: 1px solid var(--border-color);
-            gap: 1rem;
             flex-shrink: 0;
         }
 
-        .user-input-area .input-field {
+        .user-input-area label {
             flex-grow: 1;
+            margin: 0 1rem;
+        }
+
+        .user-input-area .input-field {
+            width: 100%;
             background-color: var(--secondary-bg);
             border-radius: 8px;
             padding: 0.75rem 1rem;
@@ -373,6 +387,9 @@
 
         <!-- Right Chat Panel -->
         <main class="chat-panel">
+            <div class="character-indicator" id="character-indicator">
+                当前角色：哈利·波特
+            </div>
             <div class="chat-history" id="chat-history">
                 <!-- Chat content will be dynamically inserted here -->
             </div>
@@ -439,6 +456,7 @@
         const themeText = document.getElementById('theme-text');
         const characterListEl = document.getElementById('character-list');
         const chatHistoryEl = document.getElementById('chat-history');
+        const characterIndicatorEl = document.getElementById('character-indicator');
         const body = document.body;
 
         // --- 3. State Management ---
@@ -502,9 +520,11 @@
             const character = characters.find(c => c.id === charId);
             if (!character) return;
 
+            // Update character indicator
+            characterIndicatorEl.textContent = `当前角色：${character.name}`;
+
             chatHistoryEl.innerHTML = `
                     <div class="greeting-wrapper">
-                        <h2 class="char-name">你好，我是${character.name}</h2>
                         <div class="char-greeting">${character.greeting}</div>
                     </div>
                 `;
