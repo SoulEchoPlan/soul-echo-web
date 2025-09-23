@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魂语计划</title>
+    <!-- Google Fonts for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Feather Icons for lightweight and customizable icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        /* --- 1. CSS Variables and Theme Setup --- */
+        :root {
+            --font-main: 'Noto Sans SC', sans-serif;
+
+            /* Light Theme Palette */
+            --bg-color-light: #f7f9fc;
+            --panel-bg-light: #ffffff;
+            --secondary-bg-light: #f1f3f5;
+            --text-color-light: #212529;
+            --text-muted-light: #6c757d;
+            --accent-color-light: #007bff;
+            --accent-hover-light: #0056b3;
+            --border-color-light: #dee2e6;
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+            /* Dark Theme Palette (Initial) */
+            --bg-color-dark: #121826;
+            --panel-bg-dark: #1a2233;
+            --secondary-bg-dark: #232d45;
+            --text-color-dark: #e0e6f1;
+            --text-muted-dark: #818ea4;
+            --accent-color-dark: #4a90e2;
+            --accent-hover-dark: #63a4ff;
+            --border-color-dark: #2a3652;
+            --shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* --- 2. Global Resets and Base Styles --- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: var(--font-main),serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Theme application */
+        body.light-mode {
+            --bg-color: var(--bg-color-light);
+            --panel-bg: var(--panel-bg-light);
+            --secondary-bg: var(--secondary-bg-light);
+            --text-color: var(--text-color-light);
+            --text-muted: var(--text-muted-light);
+            --accent-color: var(--accent-color-light);
+            --accent-hover: var(--accent-hover-light);
+            --border-color: var(--border-color-light);
+            --shadow: var(--shadow-light);
+        }
+
+        body.dark-mode {
+            --bg-color: var(--bg-color-dark);
+            --panel-bg: var(--panel-bg-dark);
+            --secondary-bg: var(--secondary-bg-dark);
+            --text-color: var(--text-color-dark);
+            --text-muted: var(--text-muted-dark);
+            --accent-color: var(--accent-color-dark);
+            --accent-hover: var(--accent-hover-dark);
+            --border-color: var(--border-color-dark);
+            --shadow: var(--shadow-dark);
+        }
+
+        button, input, textarea {
+            font-family: inherit;
+            border: none;
+            outline: none;
+            color: var(--text-color);
+        }
+
+        /* --- 3. Main Layout Structure --- */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1; /* Occupy remaining vertical space */
+            overflow: hidden; /* Prevent scrolling on main container */
+            padding: 1.5rem;
+            gap: 1.5rem;
+        }
+
+        /* --- 4. Header Module Styling --- */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .app-header .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .theme-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--secondary-bg);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .theme-switcher:hover {
+            background-color: var(--border-color);
+        }
+
+        /* --- 5. Sidebar Module Styling --- */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            width: 320px;
+            flex-shrink: 0;
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+        }
+
+        .search-area {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-area .search-input {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            background-color: var(--secondary-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s ease;
+        }
+        .search-area .search-input:focus {
+            border-color: var(--accent-color);
+        }
+        .search-area .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-area .search-btn, .search-area .add-btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .search-area .search-btn {
+            background-color: var(--secondary-bg);
+        }
+        .search-area .add-btn {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        .search-area .add-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .character-list {
+            list-style: none;
+            overflow-y: auto;
+            flex-grow: 1;
+            /* Custom scrollbar */
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        .character-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 2px solid transparent;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .character-item.active {
+            background-color: var(--secondary-bg);
+            border-color: var(--accent-color);
+        }
+
+        .character-info .name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+        .character-info .tags {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .character-item .select-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background-color: var(--accent-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .character-item .select-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .character-item.active .select-btn {
+            background-color: var(--secondary-bg);
+            color: var(--text-muted);
+            cursor: default;
+        }
+
+        /* --- 6. Chat Panel Module Styling --- */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .chat-history {
+            flex-grow: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .chat-history .greeting-wrapper .char-name {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .chat-history .greeting-wrapper .char-greeting {
+            background-color: var(--secondary-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            line-height: 1.7;
+            font-size: 1.1rem;
+            max-width: 80%;
+        }
+
+        .user-input-area {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .user-input-area .input-field {
+            flex-grow: 1;
+            background-color: var(--secondary-bg);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            resize: none;
+            height: 50px;
+            border: 1px solid transparent;
+        }
+
+        .user-input-area .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--secondary-bg);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .user-input-area .action-btn:hover {
+            background-color: var(--border-color);
+        }
+
+        .user-input-area .send-btn {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        .user-input-area .send-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* --- 7. Responsive Design --- */
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+                padding: 1rem;
+                gap: 1rem;
+            }
+            .sidebar {
+                width: 100%;
+                height: 40%;
+                min-height: 300px;
+            }
+            .chat-panel {
+                height: 60%;
+            }
+        }
+        @media (max-width: 576px) {
+            html {
+                font-size: 14px;
+            }
+            .app-header, .main-content {
+                padding: 0.75rem;
+            }
+            .sidebar, .chat-panel {
+                padding: 1rem;
+            }
+        }
+
+    </style>
+</head>
+<body class="light-mode">
+<div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+        <h1 class="logo">魂语计划</h1>
+        <button class="theme-switcher" id="theme-switcher">
+            <i data-feather="sun"></i>
+            <span id="theme-text">亮色</span>
+        </button>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="search-area">
+                <label>
+                    <input type="search" class="search-input" placeholder="搜索角色">
+                </label>
+                <button class="search-btn">搜索</button>
+                <button class="add-btn">新增</button>
+            </div>
+            <ul class="character-list" id="character-list">
+                <!-- Character items will be dynamically inserted here by JavaScript -->
+            </ul>
+        </aside>
+
+        <!-- Right Chat Panel -->
+        <main class="chat-panel">
+            <div class="chat-history" id="chat-history">
+                <!-- Chat content will be dynamically inserted here -->
+            </div>
+            <div class="user-input-area">
+                <button class="action-btn" aria-label="录音">
+                    <i data-feather="mic"></i>
+                </button>
+                <label>
+                    <textarea class="input-field" placeholder="输入或用语音命名..." rows="1"></textarea>
+                </label>
+                <button class="action-btn send-btn" aria-label="发送">
+                    <i data-feather="send"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- 1. Data Store ---
+        const characters = [
+            {
+                id: 'harry-potter',
+                name: '哈利·波特',
+                tags: ['勇敢', '忠诚', '坚韧'],
+                greeting: '你好，我是哈利·波特。在霍格沃茨的走廊里，你永远不会独行。有什么需要我帮忙的吗？'
+            },
+            {
+                id: 'socrates',
+                name: '苏格拉底',
+                tags: ['智慧', '谦逊', '探究'],
+                greeting: '“认识你自己。”告诉我，你今天思考了什么问题？'
+            },
+            {
+                id: 'sherlock-holmes',
+                name: '夏洛克·福尔摩斯',
+                tags: ['敏锐', '理性', '古怪'],
+                greeting: '游戏开始了。除了显而易见的事实，你还观察到了什么？'
+            },
+            {
+                id: 'marie-curie',
+                name: '玛丽·居里',
+                tags: ['坚毅', '严谨', '奉献'],
+                greeting: '在科学的道路上，我们必须有毅力，最重要的是要有自信心。你对什么充满了好奇？'
+            },
+            {
+                id: 'leonardo-da-vinci',
+                name: '列奥纳多·达·芬奇',
+                tags: ['博学', '创造', '艺术'],
+                greeting: '艺术与科学的界限，只存在于我们的想象之中。你想创造些什么呢？'
+            },
+            {
+                id: 'li-bai',
+                name: '李白',
+                tags: ['豪放', '浪漫', '诗意'],
+                greeting: '人生得意须尽欢，莫使金樽空对月。朋友，与我共饮一杯如何？'
+            }
+        ];
+
+        // --- 2. DOM Element Selectors ---
+        const themeSwitcher = document.getElementById('theme-switcher');
+        const themeText = document.getElementById('theme-text');
+        const characterListEl = document.getElementById('character-list');
+        const chatHistoryEl = document.getElementById('chat-history');
+        const body = document.body;
+
+        // --- 3. State Management ---
+        let currentTheme = 'dark';
+        let activeCharacterId = characters[0].id; // Default to the first character
+
+        // --- 4. Functions ---
+
+        /**
+         * Updates the theme switcher's icon and text based on the current theme.
+         */
+        function updateThemeSwitcherUI() {
+            const iconEl = themeSwitcher.querySelector('i');
+            if (currentTheme === 'dark') {
+                themeText.textContent = '亮色';
+                iconEl.setAttribute('data-feather', 'sun');
+            } else {
+                themeText.textContent = '暗色';
+                iconEl.setAttribute('data-feather', 'moon');
+            }
+            feather.replace(); // Re-render Feather icons
+        }
+
+        /**
+         * Toggles the theme between light and dark mode.
+         */
+        function toggleTheme() {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            body.classList.toggle('dark-mode');
+            body.classList.toggle('light-mode');
+            updateThemeSwitcherUI();
+        }
+
+        /**
+         * Renders the list of characters in the sidebar.
+         */
+        function renderCharacterList() {
+            characterListEl.innerHTML = ''; // Clear existing list
+            characters.forEach(char => {
+                const isActive = char.id === activeCharacterId;
+                const item = document.createElement('li');
+                item.className = `character-item ${isActive ? 'active' : ''}`;
+                item.dataset.id = char.id;
+
+                item.innerHTML = `
+                        <div class="character-info">
+                            <h3 class="name">${char.name}</h3>
+                            <p class="tags">${char.tags.join(' / ')}</p>
+                        </div>
+                        <button class="select-btn">${isActive ? '已选' : '选择'}</button>
+                    `;
+                characterListEl.appendChild(item);
+            });
+        }
+
+        /**
+         * Updates the chat panel with the selected character's information.
+         * @param {string} charId - The ID of the character to display.
+         */
+        function updateChatPanel(charId) {
+            const character = characters.find(c => c.id === charId);
+            if (!character) return;
+
+            chatHistoryEl.innerHTML = `
+                    <div class="greeting-wrapper">
+                        <h2 class="char-name">你好，我是${character.name}</h2>
+                        <div class="char-greeting">${character.greeting}</div>
+                    </div>
+                `;
+        }
+
+        /**
+         * Handles click events on the character list for selection.
+         * @param {Event} e - The click event object.
+         */
+        function handleCharacterSelect(e) {
+            const target = e.target.closest('.character-item');
+            if (!target) return;
+
+            const charId = target.dataset.id;
+            if (charId && charId !== activeCharacterId) {
+                activeCharacterId = charId;
+                renderCharacterList(); // Re-render to update 'active' state and button text
+                updateChatPanel(charId);
+            }
+        }
+
+
+        // --- 5. Initialisation ---
+        function init() {
+            // Set initial theme based on class on body
+            currentTheme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+
+            updateThemeSwitcherUI();
+            renderCharacterList();
+            updateChatPanel(activeCharacterId);
+
+            // Add event listeners
+            themeSwitcher.addEventListener('click', toggleTheme);
+            characterListEl.addEventListener('click', handleCharacterSelect);
+        }
+
+        // Run the app
+        init();
+
+    });
+</script>
+</body>
+</html>
