@@ -424,44 +424,29 @@
     document.addEventListener('DOMContentLoaded', () => {
 
         // --- 1. Data Store ---
-        const characters = [
-            {
-                id: 'harry-potter',
-                name: '哈利·波特',
-                tags: ['勇敢', '忠诚', '坚韧'],
-                greeting: '你好，我是哈利·波特。在霍格沃茨的走廊里，你永远不会独行。有什么需要我帮忙的吗？'
-            },
-            {
-                id: 'socrates',
-                name: '苏格拉底',
-                tags: ['智慧', '谦逊', '探究'],
-                greeting: '“认识你自己。”告诉我，你今天思考了什么问题？'
-            },
-            {
-                id: 'sherlock-holmes',
-                name: '夏洛克·福尔摩斯',
-                tags: ['敏锐', '理性', '古怪'],
-                greeting: '游戏开始了。除了显而易见的事实，你还观察到了什么？'
-            },
-            {
-                id: 'marie-curie',
-                name: '玛丽·居里',
-                tags: ['坚毅', '严谨', '奉献'],
-                greeting: '在科学的道路上，我们必须有毅力，最重要的是要有自信心。你对什么充满了好奇？'
-            },
-            {
-                id: 'leonardo-da-vinci',
-                name: '列奥纳多·达·芬奇',
-                tags: ['博学', '创造', '艺术'],
-                greeting: '艺术与科学的界限，只存在于我们的想象之中。你想创造些什么呢？'
-            },
-            {
-                id: 'li-bai',
-                name: '李白',
-                tags: ['豪放', '浪漫', '诗意'],
-                greeting: '人生得意须尽欢，莫使金樽空对月。朋友，与我共饮一杯如何？'
+        let characterData = [];
+
+        // 异步获取角色数据的函数
+        async function fetchCharacters() {
+            try {
+                const response = await fetch('http://localhost:8080/api/characters');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('获取角色数据失败:', error);
+                // 返回默认数据作为后备
+                return [
+                    {
+                        id: 'default-character',
+                        name: '默认角色',
+                        tags: ['默认'],
+                        greeting: '连接服务器失败，使用默认角色。'
+                    }
+                ];
             }
-        ];
+        }
 
         // --- 2. DOM Element Selectors ---
         const themeSwitcher = document.getElementById('theme-switcher');
@@ -470,26 +455,76 @@
         const chatHistoryEl = document.getElementById('chat-history');
         const characterIndicatorEl = document.getElementById('character-indicator');
         const micBtnEl = document.getElementById('mic-btn');
+        const sendBtnEl = document.querySelector('.send-btn');
+        const inputFieldEl = document.querySelector('.input-field');
         const body = document.body;
 
         // --- 3. State Management ---
         let currentTheme = 'dark';
-        let activeCharacterId = characters[0].id; // Default to the first character
+        let activeCharacterId = null; // 将在数据加载后设置
 
         // --- 3.1. WebSocket Connection ---
         let socket = null;
-        function initWebSocket() {
+
+        // 处理WebSocket消息的函数，包含音频播放逻辑
+        function handleWebSocketMessage(event) {
+            if (event.data instanceof Blob || event.data instanceof ArrayBuffer) {
+                // 收到二进制音频数据，进行播放
+                const audioUrl = URL.createObjectURL(event.data);
+                const audio = new Audio(audioUrl);
+
+                audio.play().then(() => {
+                    console.log('开始播放AI语音回复');
+                    // 播放完成后释放对象URL
+                    audio.onended = () => {
+                        URL.revokeObjectURL(audioUrl);
+                    };
+                }).catch(error => {
+                    console.error('音频播放失败:', error);
+                    URL.revokeObjectURL(audioUrl);
+                });
+            } else {
+                // 收到文本消息，在聊天历史中显示
+                try {
+                    const textMessage = typeof event.data === 'string' ? event.data : event.data.toString();
+                    console.log('收到文本消息:', textMessage);
+
+                    // 在聊天历史区域添加AI回复
+                    const messageDiv = document.createElement('div');
+                    messageDiv.style.cssText = 'background-color: var(--secondary-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem; line-height: 1.5;';
+                    messageDiv.textContent = textMessage;
+                    chatHistoryEl.appendChild(messageDiv);
+
+                    // 滚动到底部
+                    chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+                } catch (error) {
+                    console.error('处理文本消息失败:', error);
+                }
+            }
+        }
+
+        // 动态初始化WebSocket连接的函数
+        function initWebSocket(characterId) {
+            // 先断开现有连接
+            if (socket && socket.readyState !== WebSocket.CLOSED) {
+                socket.close();
+            }
+
             try {
-                socket = new WebSocket('ws://localhost:8080');
+                // 构建包含角色ID的WebSocket URL
+                const wsUrl = `ws://localhost:8080/chat?characterId=${encodeURIComponent(characterId)}`;
+                socket = new WebSocket(wsUrl);
+
                 socket.onopen = function(event) {
-                    console.log('WebSocket连接已建立');
+                    console.log(`WebSocket连接已建立，角色ID: ${characterId}`);
                 };
-                socket.onmessage = function(event) {
-                    console.log('收到消息:', event.data);
-                };
+
+                socket.onmessage = handleWebSocketMessage;
+
                 socket.onerror = function(error) {
                     console.error('WebSocket错误:', error);
                 };
+
                 socket.onclose = function(event) {
                     console.log('WebSocket连接已关闭');
                 };
@@ -533,8 +568,19 @@
                     this.mediaRecorder = new MediaRecorder(stream);
 
                     this.mediaRecorder.ondataavailable = (event) => {
-                        if (event.data && event.data.size > 0 && socket && socket.readyState === WebSocket.OPEN) {
-                            socket.send(event.data);
+                        // 添加更严格的连接状态检查
+                        if (event.data && event.data.size > 0) {
+                            if (socket && socket.readyState === WebSocket.OPEN) {
+                                socket.send(event.data);
+                            } else {
+                                console.warn('WebSocket未连接，无法发送音频数据。当前状态:', socket ? socket.readyState : '无连接');
+                                if (!socket) {
+                                    console.log('尝试重新初始化WebSocket连接...');
+                                    if (activeCharacterId) {
+                                        initWebSocket(activeCharacterId);
+                                    }
+                                }
+                            }
                         }
                     };
 
@@ -603,7 +649,13 @@
          */
         function renderCharacterList() {
             characterListEl.innerHTML = ''; // Clear existing list
-            characters.forEach(char => {
+
+            if (characterData.length === 0) {
+                characterListEl.innerHTML = '<li style="padding: 2rem; text-align: center; color: var(--text-muted);">正在加载角色数据...</li>';
+                return;
+            }
+
+            characterData.forEach(char => {
                 const isActive = char.id === activeCharacterId;
                 const item = document.createElement('li');
                 item.className = `character-item ${isActive ? 'active' : ''}`;
@@ -612,7 +664,7 @@
                 item.innerHTML = `
                         <div class="character-info">
                             <h3 class="name">${char.name}</h3>
-                            <p class="tags">${char.tags.join(' / ')}</p>
+                            <p class="tags">${char.tags ? char.tags.join(' / ') : '无标签'}</p>
                         </div>
                         <button class="select-btn">${isActive ? '已选' : '选择'}</button>
                     `;
@@ -625,7 +677,7 @@
          * @param {string} charId - The ID of the character to display.
          */
         function updateChatPanel(charId) {
-            const character = characters.find(c => c.id === charId);
+            const character = characterData.find(c => c.id === charId);
             if (!character) return;
 
             // Update character indicator
@@ -633,7 +685,7 @@
 
             chatHistoryEl.innerHTML = `
                     <div class="greeting-wrapper">
-                        <div class="char-greeting">${character.greeting}</div>
+                        <div class="char-greeting">${character.greeting || '你好，我是' + character.name}</div>
                     </div>
                 `;
         }
@@ -651,6 +703,9 @@
                 activeCharacterId = charId;
                 renderCharacterList(); // Re-render to update 'active' state and button text
                 updateChatPanel(charId);
+
+                // 断开现有 WebSocket 连接并创建新连接
+                initWebSocket(charId);
             }
         }
 
@@ -686,27 +741,123 @@
             updateMicButtonUI();
         }
 
+        /**
+         * 发送文本消息的函数
+         */
+        async function sendTextMessage() {
+            const messageText = inputFieldEl.value.trim();
+            if (!messageText || !activeCharacterId) {
+                return;
+            }
+
+            try {
+                // 在聊天历史中显示用户消息
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.style.cssText = 'background-color: var(--accent-color); color: white; padding: 1rem; border-radius: 8px; margin-top: 1rem; margin-left: auto; width: fit-content; max-width: 70%;';
+                userMessageDiv.textContent = messageText;
+                chatHistoryEl.appendChild(userMessageDiv);
+
+                // 清空输入框
+                inputFieldEl.value = '';
+
+                // 滚动到底部
+                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+
+                // 调用后端 API 发送消息
+                const response = await fetch('http://localhost:8080/api/characters/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        characterId: activeCharacterId,
+                        message: messageText
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const aiReply = await response.text();
+
+                // 在聊天历史中显示 AI 回复
+                const aiMessageDiv = document.createElement('div');
+                aiMessageDiv.style.cssText = 'background-color: var(--secondary-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem; line-height: 1.5; width: fit-content; max-width: 80%;';
+                aiMessageDiv.textContent = aiReply;
+                chatHistoryEl.appendChild(aiMessageDiv);
+
+                // 滚动到底部
+                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+
+            } catch (error) {
+                console.error('发送文本消息失败:', error);
+                // 显示错误消息
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'background-color: #dc3545; color: white; padding: 1rem; border-radius: 8px; margin-top: 1rem; line-height: 1.5;';
+                errorDiv.textContent = '发送消息失败，请稍后重试。';
+                chatHistoryEl.appendChild(errorDiv);
+                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+            }
+        }
+
+        /**
+         * 处理发送按钮点击事件
+         */
+        function handleSendButtonClick() {
+            sendTextMessage();
+        }
+
+        /**
+         * 处理输入框键盘事件
+         */
+        function handleInputKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendTextMessage();
+            }
+        }
+
 
         // --- 5. Initialisation ---
-        function init() {
+        async function init() {
             // Set initial theme based on class on body
             currentTheme = body.classList.contains('dark-mode') ? 'dark' : 'light';
 
-            // Initialize WebSocket connection
-            initWebSocket();
+            // 加载角色数据
+            try {
+                characterData = await fetchCharacters();
+                if (characterData.length > 0) {
+                    activeCharacterId = characterData[0].id;
+                }
+            } catch (error) {
+                console.error('初始化角色数据失败:', error);
+                // 使用空数组，界面将显示无角色状态
+                characterData = [];
+            }
 
             updateThemeSwitcherUI();
             renderCharacterList();
-            updateChatPanel(activeCharacterId);
+
+            // 只有在有角色数据时才更新聊天面板和初始化 WebSocket
+            if (activeCharacterId) {
+                updateChatPanel(activeCharacterId);
+                initWebSocket(activeCharacterId);
+            }
 
             // Add event listeners
             themeSwitcher.addEventListener('click', toggleTheme);
             characterListEl.addEventListener('click', handleCharacterSelect);
             micBtnEl.addEventListener('click', handleMicButtonClick);
+            sendBtnEl.addEventListener('click', handleSendButtonClick);
+            inputFieldEl.addEventListener('keydown', handleInputKeydown);
 
             // Cleanup on page unload
             window.addEventListener('beforeunload', () => {
                 microphoneStreamer.destroy();
+                if (socket) {
+                    socket.close();
+                }
             });
         }
 
