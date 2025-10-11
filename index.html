@@ -436,13 +436,17 @@
                 return await response.json();
             } catch (error) {
                 console.error('获取角色数据失败:', error);
-                // 返回默认数据作为后备
+                // 返回默认数据作为后备，符合新的API结构
                 return [
                     {
-                        id: 'default-character',
-                        name: '默认角色',
-                        tags: ['默认'],
-                        greeting: '连接服务器失败，使用默认角色。'
+                        id: 0,
+                        name: '连接失败',
+                        personaPrompt: '无法连接到服务器，请检查后端服务是否启动。',
+                        avatarUrl: '',
+                        voiceId: '',
+                        isPublic: true,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
                     }
                 ];
             }
@@ -511,12 +515,22 @@
             }
 
             try {
-                // 构建包含角色ID的WebSocket URL
-                const wsUrl = `ws://localhost:8080/chat?characterId=${encodeURIComponent(characterId)}`;
+                // 从全局存储的characterData数组中找到完整的角色对象
+                const character = characterData.find(c => c.id === characterId);
+                if (!character) {
+                    console.error('找不到角色ID:', characterId);
+                    return;
+                }
+
+                // 获取id和personaPrompt，并对personaPrompt进行编码
+                const encodedPersonaPrompt = encodeURIComponent(character.personaPrompt || '');
+
+                // 构建包含两个查询参数的正确的WebSocket URL
+                const wsUrl = `ws://localhost:8080/chat?characterId=${encodeURIComponent(characterId)}&personaPrompt=${encodedPersonaPrompt}`;
                 socket = new WebSocket(wsUrl);
 
                 socket.onopen = function(event) {
-                    console.log(`WebSocket连接已建立，角色ID: ${characterId}`);
+                    console.log(`WebSocket连接已建立，角色ID: ${characterId}, personaPrompt: ${character.personaPrompt?.substring(0, 50)}...`);
                 };
 
                 socket.onmessage = handleWebSocketMessage;
@@ -646,16 +660,17 @@
 
         /**
          * Renders the list of characters in the sidebar.
+         * @param {Array} data - Optional array of character data to render. If not provided, uses global characterData.
          */
-        function renderCharacterList() {
+        function renderCharacterList(data = characterData) {
             characterListEl.innerHTML = ''; // Clear existing list
 
-            if (characterData.length === 0) {
+            if (data.length === 0) {
                 characterListEl.innerHTML = '<li style="padding: 2rem; text-align: center; color: var(--text-muted);">正在加载角色数据...</li>';
                 return;
             }
 
-            characterData.forEach(char => {
+            data.forEach(char => {
                 const isActive = char.id === activeCharacterId;
                 const item = document.createElement('li');
                 item.className = `character-item ${isActive ? 'active' : ''}`;
@@ -664,7 +679,7 @@
                 item.innerHTML = `
                         <div class="character-info">
                             <h3 class="name">${char.name}</h3>
-                            <p class="tags">${char.tags ? char.tags.join(' / ') : '无标签'}</p>
+                            <p class="tags">${char.personaPrompt ? char.personaPrompt.substring(0, 30) + '...' : '无描述'}</p>
                         </div>
                         <button class="select-btn">${isActive ? '已选' : '选择'}</button>
                     `;
@@ -685,7 +700,7 @@
 
             chatHistoryEl.innerHTML = `
                     <div class="greeting-wrapper">
-                        <div class="char-greeting">${character.greeting || '你好，我是' + character.name}</div>
+                        <div class="char-greeting">${character.personaPrompt ? character.personaPrompt.substring(0, 100) + '...' : '你好，我是' + character.name}</div>
                     </div>
                 `;
         }
@@ -698,7 +713,7 @@
             const target = e.target.closest('.character-item');
             if (!target) return;
 
-            const charId = target.dataset.id;
+            const charId = Number(target.dataset.id);
             if (charId && charId !== activeCharacterId) {
                 activeCharacterId = charId;
                 renderCharacterList(); // Re-render to update 'active' state and button text
@@ -750,54 +765,31 @@
                 return;
             }
 
-            try {
-                // 在聊天历史中显示用户消息
-                const userMessageDiv = document.createElement('div');
-                userMessageDiv.style.cssText = 'background-color: var(--accent-color); color: white; padding: 1rem; border-radius: 8px; margin-top: 1rem; margin-left: auto; width: fit-content; max-width: 70%;';
-                userMessageDiv.textContent = messageText;
-                chatHistoryEl.appendChild(userMessageDiv);
+            // 在聊天历史中显示用户消息
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.style.cssText = 'background-color: var(--accent-color); color: white; padding: 1rem; border-radius: 8px; margin-top: 1rem; margin-left: auto; width: fit-content; max-width: 70%;';
+            userMessageDiv.textContent = messageText;
+            chatHistoryEl.appendChild(userMessageDiv);
 
-                // 清空输入框
-                inputFieldEl.value = '';
+            // 清空输入框
+            inputFieldEl.value = '';
 
-                // 滚动到底部
-                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+            // 滚动到底部
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
 
-                // 调用后端 API 发送消息
-                const response = await fetch('http://localhost:8080/api/characters/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        characterId: activeCharacterId,
-                        message: messageText
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const aiReply = await response.text();
-
-                // 在聊天历史中显示 AI 回复
-                const aiMessageDiv = document.createElement('div');
-                aiMessageDiv.style.cssText = 'background-color: var(--secondary-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem; line-height: 1.5; width: fit-content; max-width: 80%;';
-                aiMessageDiv.textContent = aiReply;
-                chatHistoryEl.appendChild(aiMessageDiv);
-
-                // 滚动到底部
-                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
-
-            } catch (error) {
-                console.error('发送文本消息失败:', error);
-                // 显示错误消息
+            // 检查WebSocket连接状态并发送消息
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                // 直接通过WebSocket发送文本消息
+                socket.send(messageText);
+            } else {
+                // 连接未打开或已关闭，显示错误信息
                 const errorDiv = document.createElement('div');
                 errorDiv.style.cssText = 'background-color: #dc3545; color: white; padding: 1rem; border-radius: 8px; margin-top: 1rem; line-height: 1.5;';
-                errorDiv.textContent = '发送消息失败，请稍后重试。';
+                errorDiv.textContent = '连接已断开，请刷新页面或重新选择角色';
                 chatHistoryEl.appendChild(errorDiv);
                 chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+
+                console.warn('WebSocket未连接，无法发送文本消息。当前状态:', socket ? socket.readyState : '无连接');
             }
         }
 
@@ -815,6 +807,50 @@
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 sendTextMessage();
+            }
+        }
+
+        /**
+         * 搜索功能：客户端过滤角色
+         */
+        function handleSearch() {
+            const searchTerm = document.querySelector('.search-input').value.toLowerCase();
+            if (!searchTerm) {
+                renderCharacterList(characterData); // 传入原始数据
+                return;
+            }
+            const filteredData = characterData.filter(char =>
+                char.name.toLowerCase().includes(searchTerm)
+            );
+            renderCharacterList(filteredData); // 传入过滤后的数据
+        }
+
+        /**
+         * 新增角色功能：调用后端API
+         */
+        async function handleAddCharacter() {
+            const name = prompt("请输入新角色的名称:");
+            if (!name) return;
+            const personaPrompt = prompt("请输入新角色的设定:");
+            if (!personaPrompt) return;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/characters', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        personaPrompt: personaPrompt,
+                        avatarUrl: 'https://i.pravatar.cc/150' // 默认头像
+                    })
+                });
+                if (!response.ok) throw new Error('创建失败');
+
+                alert('角色创建成功！');
+                await init(); // 重新初始化整个应用
+            } catch (error) {
+                console.error('创建角色失败:', error);
+                alert('创建角色失败，请查看控制台日志。');
             }
         }
 
@@ -851,6 +887,12 @@
             micBtnEl.addEventListener('click', handleMicButtonClick);
             sendBtnEl.addEventListener('click', handleSendButtonClick);
             inputFieldEl.addEventListener('keydown', handleInputKeydown);
+
+            // --- 新增以下监听器 ---
+            const searchBtn = document.querySelector('.search-btn');
+            const addBtn = document.querySelector('.add-btn');
+            searchBtn.addEventListener('click', handleSearch);
+            addBtn.addEventListener('click', handleAddCharacter);
 
             // Cleanup on page unload
             window.addEventListener('beforeunload', () => {
