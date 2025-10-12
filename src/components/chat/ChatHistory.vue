@@ -17,6 +17,8 @@
     >
       <div class="message-content">
         {{ message.content }}
+        <!-- 为未完成的 AI 消息添加打字光标 -->
+        <span v-if="message.type === 'ai' && !message.isComplete" class="typing-cursor"></span>
       </div>
     </div>
 
@@ -175,5 +177,25 @@ watch([isConnecting, isConnected], () => {
 
 .chat-history::-webkit-scrollbar-thumb:hover {
   background-color: var(--text-muted);
+}
+
+/* 打字光标动画 */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: currentColor;
+  margin-left: 2px;
+  animation: blink 1s infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  0%, 49% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
 }
 </style>

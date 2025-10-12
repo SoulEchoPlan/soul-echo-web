@@ -81,7 +81,12 @@ export const useChatStore = defineStore('chat', {
       if (!this.conversations[characterId]) {
         this.conversations[characterId] = []
       }
-      this.conversations[characterId].push(message)
+      // 确保消息对象包含 isComplete 属性（默认为 true）
+      const messageWithComplete = {
+        ...message,
+        isComplete: message.isComplete !== undefined ? message.isComplete : true
+      }
+      this.conversations[characterId].push(messageWithComplete)
     },
 
     addUserMessage(content, characterId) {
@@ -92,11 +97,12 @@ export const useChatStore = defineStore('chat', {
       }, characterId)
     },
 
-    addAiMessage(content, characterId, audioUrl = null) {
+    addAiMessage(content, characterId, audioUrl = null, isComplete = true) {
       this.addMessage({
         type: 'ai',
         content,
         audioUrl,
+        isComplete,
         timestamp: new Date().toISOString()
       }, characterId)
     },
@@ -121,16 +127,55 @@ export const useChatStore = defineStore('chat', {
         // 处理二进制音频数据 - 使用流式播放器
         console.log('收到音频数据块:', event.data.byteLength, 'bytes')
         this.audioPlayer.receive(event.data)
-      } else {
-        // 处理文本消息
-        try {
-          const textMessage = typeof event.data === 'string' ? event.data : event.data.toString()
-          console.log('收到文本消息:', textMessage)
-          this.addAiMessage(textMessage, characterId)
-        } catch (error) {
-          console.error('处理文本消息失败:', error)
-          this.addErrorMessage('消息处理失败', characterId)
+        return
+      }
+
+      // 处理文本消息
+      const textData = typeof event.data === 'string' ? event.data : event.data.toString()
+
+      // 尝试解析为 JSON（用于用户语音回显）
+      try {
+        const jsonData = JSON.parse(textData)
+
+        if (jsonData.type === 'user-transcription') {
+          // 用户语音识别结果回显
+          console.log('收到用户语音识别:', jsonData.content)
+          this.addUserMessage(jsonData.content, characterId)
+          return
         }
+      } catch (e) {
+        // 不是 JSON，继续作为流式文本处理
+      }
+
+      // 处理流式文本
+      const textChunk = textData
+
+      // 检查是否是流结束信号
+      if (textChunk === '[STREAM_END]') {
+        console.log('收到流结束信号')
+        const messages = this.conversations[characterId]
+        if (messages && messages.length > 0) {
+          const lastMessage = messages[messages.length - 1]
+          if (lastMessage.type === 'ai' && !lastMessage.isComplete) {
+            lastMessage.isComplete = true
+            console.log('AI消息流完成')
+          }
+        }
+        return
+      }
+
+      // 查找当前角色的对话历史中最后一条消息
+      const messages = this.conversations[characterId] || []
+      const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null
+
+      if (lastMessage && lastMessage.type === 'ai' && !lastMessage.isComplete) {
+        // 追加到现有的未完成消息
+        lastMessage.content += textChunk
+        console.log('追加文本块:', textChunk)
+      } else {
+        // 创建新的未完成 AI 消息
+        console.log('创建新的流式消息:', textChunk)
+        this.addAiMessage(textChunk, characterId, null, false)
       }
     }
   }
