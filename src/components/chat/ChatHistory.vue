@@ -96,6 +96,10 @@ watch([isConnecting, isConnected], () => {
   overflow-y: auto;
 }
 
+.greeting-wrapper {
+  margin-bottom: 1.5rem;
+}
+
 .greeting-wrapper .char-name {
   font-size: 2rem;
   font-weight: 700;

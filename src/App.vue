@@ -25,8 +25,8 @@ const themeClass = computed(() => {
 
 onMounted(() => {
   // 设置初始主题
-  currentTheme.value = 'dark'
-  document.body.classList.add('dark-mode')
+  currentTheme.value = 'light'
+  document.body.classList.add('light-mode')
 
   // 初始化角色数据
   characterStore.fetchCharacters()
