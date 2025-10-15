@@ -6,11 +6,11 @@
   --bg-color-light: #f7f9fc;
   --panel-bg-light: #ffffff;
   --secondary-bg-light: #f1f3f5;
-  --text-color-light: #212529;
+  --text-color-light: #000000;
   --text-muted-light: #6c757d;
   --accent-color-light: #007bff;
   --accent-hover-light: #0056b3;
-  --border-color-light: #dee2e6;
+  --border-color-light: #ced4da;
   --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   /* Dark Theme Palette (Initial) */
@@ -33,7 +33,7 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 body {
@@ -117,4 +117,13 @@ button, input, textarea {
   .sidebar, .chat-panel {
     padding: 1rem;
   }
+}
+
+/* Component color force corrections for light theme */
+body.light-mode .add-btn, body.light-mode .select-btn {
+  color: #ffffff;
+}
+
+body.light-mode .message.user .message-content {
+  color: #ffffff;
 }

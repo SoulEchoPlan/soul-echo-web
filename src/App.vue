@@ -1,6 +1,6 @@
 <template>
   <div class="app-container" :class="themeClass">
-    <TheHeader />
+    <TheHeader :theme="currentTheme" @toggle-theme="toggleThemeHandler" />
     <div class="main-content">
       <CharacterList />
       <ChatPanel />
@@ -17,15 +17,20 @@ import { useCharacterStore } from './stores/character'
 
 const characterStore = useCharacterStore()
 
-const currentTheme = ref('dark')
+const currentTheme = ref('light')
 
 const themeClass = computed(() => {
   return `${currentTheme.value}-mode`
 })
 
+const toggleThemeHandler = () => {
+  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+  document.body.classList.remove('light-mode', 'dark-mode')
+  document.body.classList.add(`${currentTheme.value}-mode`)
+}
+
 onMounted(() => {
   // 设置初始主题
-  currentTheme.value = 'light'
   document.body.classList.add('light-mode')
 
   // 初始化角色数据

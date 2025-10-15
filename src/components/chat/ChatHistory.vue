@@ -163,6 +163,7 @@ watch([isConnecting, isConnected], () => {
   text-align: center;
   color: var(--text-muted);
   font-style: italic;
+  margin-top: 1.5rem;
 }
 
 /* 自定义滚动条 */
