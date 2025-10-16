@@ -1,338 +1,73 @@
 <template>
-  <div class="user-input-area">
-    <button
-        class="action-btn mic-btn"
-        :class="{ recording: isRecording }"
-        @click="handleMicClick"
-        :aria-label="isRecording ? '停止录音' : '录音'"
-    >
-      <i :data-feather="isRecording ? 'stop-circle' : 'mic'"></i>
-    </button>
-    <label>
-      <textarea
-          class="input-field"
-          placeholder="输入或用语音命名..."
-          rows="1"
-          v-model="messageText"
-          @keydown="handleKeydown"
-          ref="textareaRef"
-      ></textarea>
-    </label>
-    <button
-        class="action-btn send-btn"
-        @click="handleSend"
-        aria-label="发送"
-    >
-      <i data-feather="send"></i>
-    </button>
+  <div class="p-6 border-t border-gray-700 bg-gray-800/70 flex-shrink-0">
+    <div class="flex flex-col items-center">
+      <!-- 状态指示器 -->
+      <div class="text-sm text-gray-400 h-5 mb-3">
+        {{ statusText }}
+      </div>
+      <!-- 语音录制按钮 -->
+      <button
+        @click="handleToggleRecording"
+        :disabled="disabled"
+        :class="[
+          'rounded-full w-16 h-16 flex items-center justify-center transition-all duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900',
+          isRecording
+            ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500',
+          disabled ? 'opacity-50 cursor-not-allowed' : ''
+        ]"
+      >
+        <Mic v-if="!isRecording" class="h-8 w-8 text-white" />
+        <Square v-else class="h-7 w-7 text-white" />
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import {ref, nextTick, onMounted, onUnmounted} from 'vue'
-import {useChatStore} from '@/stores/chat'
-import {useCharacterStore} from '@/stores/character'
-import feather from 'feather-icons'
+import { computed } from 'vue'
+import { Mic, Square } from 'lucide-vue-next'
 
-const chatStore = useChatStore()
-const characterStore = useCharacterStore()
-
-const messageText = ref('')
-const isRecording = ref(false)
-const textareaRef = ref(null)
-
-// 麦克风录音器
-class MicrophoneStreamer {
-  constructor() {
-    this.audioContext = null;
-    this.mediaStreamSource = null;
-    this.scriptProcessor = null;
-    this.isRecording = false;
-    this.hasPermission = false;
-    this.audioStream = null;
-
-    // --- 新增属性 ---
-    this.targetSampleRate = 16000; // 阿里云要求的采样率
-  }
-
-  async initializeStream() {
-    if (this.audioStream && this.audioStream.active) {
-      return this.audioStream;
-    }
-    try {
-      this.audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
-      this.hasPermission = true;
-      return this.audioStream;
-    } catch (error) {
-      this.hasPermission = false;
-      throw error;
-    }
-  }
-
-  async start() {
-    if (this.isRecording) {
-      return;
-    }
-
-    try {
-      const stream = await this.initializeStream();
-
-      // 1. 创建 AudioContext
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-      // 2. 创建 MediaStreamSource
-      this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream);
-
-      // 3. 创建 ScriptProcessorNode 用于处理音频数据
-      const bufferSize = 4096; // 处理块的大小
-      this.scriptProcessor = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
-
-      // 4. 核心处理逻辑
-      this.scriptProcessor.onaudioprocess = (event) => {
-        if (!this.isRecording) return;
-
-        const inputData = event.inputBuffer.getChannelData(0);
-
-        // --- 核心步骤：重采样和格式转换 ---
-        const resampledData = this.resample(inputData, this.audioContext.sampleRate, this.targetSampleRate);
-        const pcmData = this.float32ToInt16(resampledData);
-
-        if (chatStore.isConnected) {
-          chatStore.sendMessage(pcmData.buffer);
-        } else {
-          console.warn('WebSocket未连接，无法发送音频数据');
-        }
-      };
-
-      // 5. 连接节点
-      this.mediaStreamSource.connect(this.scriptProcessor);
-      this.scriptProcessor.connect(this.audioContext.destination);
-
-      this.isRecording = true;
-
-    } catch (error) {
-      alert('无法获取麦克风权限，请检查浏览器设置并重试。');
-      console.error('麦克风权限请求失败:', error);
-    }
-  }
-
-  stop() {
-    if (!this.isRecording) {
-      return;
-    }
-
-    this.isRecording = false;
-
-    // 断开并清理 Web Audio API 节点
-    if (this.mediaStreamSource) {
-      this.mediaStreamSource.disconnect();
-      this.mediaStreamSource = null;
-    }
-    if (this.scriptProcessor) {
-      this.scriptProcessor.disconnect();
-      this.scriptProcessor.onaudioprocess = null;
-      this.scriptProcessor = null;
-    }
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-    }
-  }
-
-  destroy() {
-    this.stop();
-    if (this.audioStream) {
-      this.audioStream.getTracks().forEach(track => track.stop());
-      this.audioStream = null;
-    }
-    this.hasPermission = false;
-  }
-
-  // --- 新增辅助方法 ---
-
-  /**
-   * 重采样音频数据
-   */
-  resample(input, fromSampleRate, toSampleRate) {
-    if (fromSampleRate === toSampleRate) {
-      return input;
-    }
-    const ratio = fromSampleRate / toSampleRate;
-    const outputLength = Math.floor(input.length / ratio);
-    const output = new Float32Array(outputLength);
-    for (let i = 0; i < outputLength; i++) {
-      const nearestInputIndex = Math.floor(i * ratio);
-      output[i] = input[nearestInputIndex];
-    }
-    return output;
-  }
-
-  /**
-   * 将 32位浮点数 转换为 16位PCM整数
-   */
-  float32ToInt16(buffer) {
-    let l = buffer.length;
-    const buf = new Int16Array(l);
-    while (l--) {
-      buf[l] = Math.min(1, buffer[l]) * 0x7FFF;
-    }
-    return buf;
-  }
-}
-
-const microphoneStreamer = new MicrophoneStreamer()
-
-const handleMicClick = async () => {
-  // 首次点击录音时，初始化音频播放器（满足浏览器安全策略）
-  if (!isRecording.value) {
-    try {
-      chatStore.audioPlayer.initialize()
-    } catch (error) {
-      console.error('音频播放器初始化失败:', error)
-    }
-  }
-
-  if (isRecording.value) {
-    microphoneStreamer.stop()
-  } else {
-    await microphoneStreamer.start()
-  }
-
-  // 同步 UI 状态
-  isRecording.value = microphoneStreamer.isRecording
-  updateMicButtonUI()
-}
-
-const updateMicButtonUI = () => {
-  nextTick(() => {
-    feather.replace()
-  })
-}
-
-const handleSend = () => {
-  sendTextMessage()
-}
-
-const handleKeydown = (event) => {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    event.preventDefault()
-    sendTextMessage()
-  }
-}
-
-const sendTextMessage = () => {
-  const text = messageText.value.trim()
-  if (!text || !characterStore.activeCharacterId) {
-    return
-  }
-
-  // 添加用户消息到聊天记录
-  chatStore.addUserMessage(text, characterStore.activeCharacterId)
-
-  // 清空输入框
-  messageText.value = ''
-  adjustTextareaHeight()
-
-  // 发送消息
-  const success = chatStore.sendMessage(text)
-  if (!success) {
-    chatStore.addErrorMessage('连接已断开，请刷新页面或重新选择角色', characterStore.activeCharacterId)
-  }
-}
-
-const adjustTextareaHeight = () => {
-  nextTick(() => {
-    if (textareaRef.value) {
-      textareaRef.value.style.height = '50px'
-      const scrollHeight = textareaRef.value.scrollHeight
-      if (scrollHeight > 50) {
-        textareaRef.value.style.height = Math.min(scrollHeight, 120) + 'px'
-      }
-    }
-  })
-}
-
-onMounted(() => {
-  feather.replace()
-
-  // 监听输入变化，自动调整文本框高度
-  if (textareaRef.value) {
-    textareaRef.value.addEventListener('input', adjustTextareaHeight)
+const props = defineProps({
+  isRecording: {
+    type: Boolean,
+    default: false
+  },
+  isConnecting: {
+    type: Boolean,
+    default: false
+  },
+  isAiThinking: {
+    type: Boolean,
+    default: false
+  },
+  isProcessing: {
+    type: Boolean,
+    default: false
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
-onUnmounted(() => {
-  microphoneStreamer.destroy()
+const emit = defineEmits(['toggle-recording'])
+
+const statusText = computed(() => {
+  if (props.isConnecting) return '正在连接...'
+  if (props.isRecording) return '正在聆听...'
+  if (props.isAiThinking) return 'AI正在思考...'
+  if (props.isProcessing) return '正在处理语音...'
+  return '点击下方按钮开始说话'
 })
+
+const handleToggleRecording = () => {
+  if (!props.disabled) {
+    emit('toggle-recording')
+  }
+}
 </script>
 
 <style scoped>
-.user-input-area {
-  display: flex;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
-}
-
-.user-input-area label {
-  flex-grow: 1;
-  margin: 0 1rem;
-}
-
-.user-input-area .input-field {
-  width: 100%;
-  background-color: var(--secondary-bg);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  resize: none;
-  height: 50px;
-  border: 1px solid transparent;
-  min-height: 50px;
-  max-height: 120px;
-  overflow-y: auto;
-}
-
-.user-input-area .action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: var(--secondary-bg);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.user-input-area .action-btn:hover {
-  background-color: var(--border-color);
-}
-
-.user-input-area .send-btn {
-  background-color: var(--accent-color);
-  color: white;
-}
-
-.user-input-area .send-btn:hover {
-  background-color: var(--accent-hover);
-}
-
-.user-input-area .mic-btn.recording {
-  background-color: #dc3545;
-  color: white;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
+/* 组件特定样式 */
 </style>

@@ -1,17 +1,19 @@
 <template>
   <div class="max-w-7xl mx-auto">
-    <h1 class="text-3xl font-bold mb-2">角色知识库管理</h1>
-    <p class="text-gray-400 mb-8">为你的 AI 角色上传、管理和同步知识，打造独特的对话体验。</p>
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">角色知识库管理</h1>
+      <p class="text-gray-400">为你的 AI 角色上传、管理和同步知识，打造独特的对话体验。</p>
+    </div>
 
     <!-- 角色选择 -->
-    <div class="mb-6">
+    <div class="mb-8">
       <label for="kb-character-select" class="block text-sm font-medium text-gray-300 mb-2">
         选择要管理的角色
       </label>
       <select
         v-model="selectedCharacterId"
         @change="onCharacterChange"
-        class="w-full max-w-xs bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+        class="bg-gray-800 border border-gray-600 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
       >
         <option value="" disabled>请选择角色</option>
         <option
@@ -25,7 +27,7 @@
     </div>
 
     <div v-if="!selectedCharacterId" class="text-center py-12">
-      <i data-lucide="book-open" class="h-16 w-16 text-gray-600 mx-auto mb-4"></i>
+      <BookOpen class="h-16 w-16 text-gray-600 mx-auto mb-4" />
       <p class="text-gray-400 text-lg">请先选择一个角色</p>
       <p class="text-gray-500 text-sm mt-2">选择角色后可以管理其知识库</p>
     </div>
@@ -33,19 +35,19 @@
     <div v-else>
       <!-- 文件上传区域 -->
       <div
-        class="bg-gray-800 rounded-lg p-6 border-2 border-dashed border-gray-700 hover:border-indigo-500 transition-colors mb-8"
+        class="bg-gray-800 rounded-lg p-8 border-2 border-dashed border-gray-600 hover:border-indigo-500 transition-colors mb-8"
         @dragover.prevent="handleDragOver"
         @dragleave.prevent="handleDragLeave"
         @drop.prevent="handleDrop"
         :class="{ 'border-indigo-500 bg-indigo-500/10': isDragging }"
       >
-        <h2 class="text-xl font-semibold mb-4">上传新知识</h2>
+        <h2 class="text-xl font-semibold mb-6">上传新知识</h2>
         <div class="flex flex-col items-center justify-center text-center">
-          <i data-lucide="upload-cloud" class="h-12 w-12 text-gray-500 mb-2"></i>
-          <p class="text-gray-400 mb-4">
+          <UploadCloud class="h-16 w-16 text-gray-400 mb-4" />
+          <p class="text-gray-300 mb-6 text-lg">
             {{ isDragging ? '释放文件到这里' : '拖拽���件到这里，或点击上传' }}
           </p>
-          <p class="text-xs text-gray-500 mb-4">支持 TXT, PDF, MD 等格式</p>
+          <p class="text-sm text-gray-500 mb-6">支持 TXT, PDF, MD 等格式</p>
           <input
             ref="fileInput"
             type="file"
@@ -57,7 +59,7 @@
           <button
             @click="$refs.fileInput.click()"
             :disabled="uploading"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ uploading ? '上传中...' : '选择文件' }}
           </button>
@@ -93,14 +95,14 @@
 
         <div
           v-else-if="knowledgeFiles.length === 0"
-          class="bg-gray-800 rounded-lg border border-gray-700 text-center py-12"
+          class="bg-gray-800 rounded-lg border border-gray-600 text-center py-12"
         >
-          <i data-lucide="file-text" class="h-16 w-16 text-gray-600 mx-auto mb-4"></i>
+          <FileText class="h-16 w-16 text-gray-600 mx-auto mb-4" />
           <p class="text-gray-400 text-lg">暂无知识文件</p>
           <p class="text-gray-500 text-sm mt-2">上传文件来为角色添加知识</p>
         </div>
 
-        <div v-else class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+        <div v-else class="bg-gray-800 rounded-lg overflow-hidden border border-gray-600">
           <table class="w-full text-left">
             <thead class="bg-gray-700/50">
               <tr>
@@ -120,10 +122,10 @@
               >
                 <td class="p-4">
                   <div class="flex items-center">
-                    <i
-                      :data-lucide="getFileIcon(file.type)"
+                    <component
+                      :is="getFileIconComponent(file.type)"
                       class="h-5 w-5 text-gray-400 mr-3"
-                    ></i>
+                    />
                     <span class="font-medium">{{ file.name }}</span>
                   </div>
                 </td>
@@ -145,7 +147,7 @@
                     class="text-red-400 hover:text-red-300 transition-colors"
                     title="删除"
                   >
-                    <i data-lucide="trash-2" class="h-5 w-5"></i>
+                    <Trash2 class="h-5 w-5" />
                   </button>
                 </td>
               </tr>
@@ -165,7 +167,7 @@
         <div class="p-6">
           <div class="flex items-center mb-4">
             <div class="flex-shrink-0">
-              <i data-lucide="alert-triangle" class="h-6 w-6 text-red-400"></i>
+              <AlertTriangle class="h-6 w-6 text-red-400" />
             </div>
             <div class="ml-3">
               <h3 class="text-lg font-medium text-white">确认删除</h3>
@@ -203,12 +205,25 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useCharacterStore } from '@/stores/character'
 import Notification from '@/components/Notification.vue'
-import { lucide } from 'lucide-vue-next'
+import {
+  BookOpen,
+  UploadCloud,
+  FileText,
+  Trash2,
+  AlertTriangle,
+  File
+} from 'lucide-vue-next'
 
 export default {
   name: 'KnowledgeManager',
   components: {
-    Notification
+    Notification,
+    BookOpen,
+    UploadCloud,
+    FileText,
+    Trash2,
+    AlertTriangle,
+    File
   },
   setup() {
     const characterStore = useCharacterStore()
@@ -400,16 +415,9 @@ export default {
       deleteTarget.value = null
     }
 
-    // 获取文件图标
-    const getFileIcon = (fileType) => {
-      const iconMap = {
-        'pdf': 'file-text',
-        'txt': 'file-text',
-        'md': 'file-text',
-        'doc': 'file-text',
-        'docx': 'file-text'
-      }
-      return iconMap[fileType.toLowerCase()] || 'file'
+    // 获取文件图标组件
+    const getFileIconComponent = (fileType) => {
+      return FileText
     }
 
     // 获取文件类型样式
@@ -468,11 +476,6 @@ export default {
 
     onMounted(async () => {
       await loadCharacters()
-
-      // 初始化Lucide图标
-      nextTick(() => {
-        lucide.createIcons()
-      })
     })
 
     return {
@@ -501,7 +504,7 @@ export default {
       deleteKnowledgeFile,
       confirmDelete,
       cancelDelete,
-      getFileIcon,
+      getFileIconComponent,
       getFileTypeClass,
       getStatusClass,
       getStatusText,

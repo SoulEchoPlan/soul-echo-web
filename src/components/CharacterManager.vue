@@ -9,7 +9,7 @@
         @click="openCreateModal"
         class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
       >
-        <i data-lucide="plus" class="h-5 w-5"></i>
+        <Plus class="h-5 w-5" />
         创建新角色
       </button>
     </div>
@@ -21,7 +21,7 @@
       </div>
 
       <div v-else-if="characters.length === 0" class="text-center py-12">
-        <i data-lucide="users" class="h-16 w-16 text-gray-600 mx-auto mb-4"></i>
+        <Users class="h-16 w-16 text-gray-600 mx-auto mb-4" />
         <p class="text-gray-400 text-lg">暂无角色</p>
         <p class="text-gray-500 text-sm mt-2">点击上方按钮创建第一个角色</p>
       </div>
@@ -57,14 +57,14 @@
                 class="text-blue-400 hover:text-blue-300 transition-colors"
                 title="编辑"
               >
-                <i data-lucide="edit" class="h-5 w-5"></i>
+                <Edit class="h-5 w-5" />
               </button>
               <button
                 @click="deleteCharacter(character)"
                 class="text-red-400 hover:text-red-300 transition-colors"
                 title="删除"
               >
-                <i data-lucide="trash-2" class="h-5 w-5"></i>
+                <Trash2 class="h-5 w-5" />
               </button>
             </td>
           </tr>
@@ -90,7 +90,7 @@
                 @click="closeModal"
                 class="text-gray-400 hover:text-white transition-colors"
               >
-                <i data-lucide="x" class="h-6 w-6"></i>
+                <X class="h-6 w-6" />
               </button>
             </div>
 
@@ -194,7 +194,7 @@
         <div class="p-6">
           <div class="flex items-center mb-4">
             <div class="flex-shrink-0">
-              <i data-lucide="alert-triangle" class="h-6 w-6 text-red-400"></i>
+              <AlertTriangle class="h-6 w-6 text-red-400" />
             </div>
             <div class="ml-3">
               <h3 class="text-lg font-medium text-white">确认删除</h3>
@@ -229,12 +229,25 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useCharacterStore } from '@/stores/character'
 import Notification from '@/components/Notification.vue'
-import { lucide } from 'lucide-vue-next'
+import {
+  Plus,
+  Users,
+  Edit,
+  Trash2,
+  X,
+  AlertTriangle
+} from 'lucide-vue-next'
 
 export default {
   name: 'CharacterManager',
   components: {
-    Notification
+    Notification,
+    Plus,
+    Users,
+    Edit,
+    Trash2,
+    X,
+    AlertTriangle
   },
   emits: ['character-updated', 'character-created', 'character-deleted'],
   setup(props, { emit }) {
@@ -370,11 +383,6 @@ export default {
 
     onMounted(async () => {
       await loadCharacters()
-
-      // 初始化Lucide图标
-      nextTick(() => {
-        lucide.createIcons()
-      })
     })
 
     return {

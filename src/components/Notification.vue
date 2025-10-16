@@ -8,17 +8,17 @@
       ]"
     >
       <div class="flex items-center">
-        <i
-          v-if="icon"
-          :data-lucide="icon"
+        <component
+          v-if="iconComponent"
+          :is="iconComponent"
           :class="['h-5 w-5 mr-3', iconClass]"
-        ></i>
+        />
         <span class="text-white font-medium">{{ message }}</span>
         <button
           @click="hide"
           class="ml-4 text-white/80 hover:text-white transition-colors"
         >
-          <i data-lucide="x" class="h-4 w-4"></i>
+          <X class="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -27,10 +27,23 @@
 
 <script>
 import { ref, computed, nextTick } from 'vue'
-import { lucide } from 'lucide-vue-next'
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Info,
+  X
+} from 'lucide-vue-next'
 
 export default {
   name: 'Notification',
+  components: {
+    CheckCircle,
+    XCircle,
+    AlertTriangle,
+    Info,
+    X
+  },
   setup() {
     const visible = ref(false)
     const message = ref('')
@@ -47,12 +60,12 @@ export default {
       return `${baseClass} ${typeClasses[type.value]}`
     })
 
-    const icon = computed(() => {
+    const iconComponent = computed(() => {
       const icons = {
-        success: 'check-circle',
-        error: 'x-circle',
-        warning: 'alert-triangle',
-        info: 'info'
+        success: CheckCircle,
+        error: XCircle,
+        warning: AlertTriangle,
+        info: Info
       }
       return icons[type.value]
     })
@@ -79,11 +92,6 @@ export default {
           hide()
         }, duration)
       }
-
-      // ��新初始化图标
-      nextTick(() => {
-        lucide.createIcons()
-      })
     }
 
     const hide = () => {
@@ -99,7 +107,7 @@ export default {
       message,
       type,
       notificationClass,
-      icon,
+      iconComponent,
       iconClass,
       show,
       hide
@@ -112,6 +120,29 @@ export default {
 /* 进入和离开动画 */
 .transform {
   transform-origin: top right;
+}
+
+/* 滑入动画效果 */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
 /* 确保通知不会遮挡重要内容 */
