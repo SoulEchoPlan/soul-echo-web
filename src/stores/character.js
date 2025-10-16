@@ -54,14 +54,57 @@ export const useCharacterStore = defineStore('character', {
       }
     },
 
-    async addCharacter(characterData) {
+    async createCharacter(characterData) {
       try {
-        await api.createCharacter(characterData)
+        const newCharacter = await api.createCharacter(characterData)
         // 重新获取角色列表
         await this.fetchCharacters()
-        return true
+        return newCharacter
       } catch (error) {
         console.error('创建角色失败:', error)
+        throw error
+      }
+    },
+
+    async updateCharacter(characterData) {
+      try {
+        if (!characterData.id) {
+          throw new Error('角色ID不能为空')
+        }
+        const updatedCharacter = await api.updateCharacter(characterData.id, characterData)
+        // 更新本地角色数据
+        const index = this.characters.findIndex(char => char.id === characterData.id)
+        if (index !== -1) {
+          this.characters[index] = updatedCharacter
+        }
+        return updatedCharacter
+      } catch (error) {
+        console.error('更新角色失败:', error)
+        throw error
+      }
+    },
+
+    async deleteCharacter(id) {
+      try {
+        await api.deleteCharacter(id)
+        // 从本地列表中移除
+        this.characters = this.characters.filter(char => char.id !== id)
+
+        // 如果删除的是当前激活的角色，重新选择激活角色
+        if (this.activeCharacterId === id) {
+          this.activeCharacterId = this.characters.length > 0 ? this.characters[0].id : null
+        }
+      } catch (error) {
+        console.error('删除角色失败:', error)
+        throw error
+      }
+    },
+
+    async getCharacter(id) {
+      try {
+        return await api.getCharacter(id)
+      } catch (error) {
+        console.error('获取角色详情失败:', error)
         throw error
       }
     },
@@ -72,7 +115,8 @@ export const useCharacterStore = defineStore('character', {
       }
       const term = searchTerm.toLowerCase()
       return this.characters.filter(char =>
-        char.name.toLowerCase().includes(term)
+        char.name.toLowerCase().includes(term) ||
+        char.personaPrompt.toLowerCase().includes(term)
       )
     }
   }
