@@ -515,33 +515,3 @@ export default {
 }
 </script>
 
-<style scoped>
-/* 拖拽区域样式 */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-/* 表格悬停效果 */
-.hover\:bg-gray-700\/30:hover {
-  background-color: rgba(55, 65, 81, 0.3);
-}
-
-/* 进度条动画 */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-
-/* 文件类型标签样式 */
-.rounded-full {
-  border-radius: 9999px;
-}
-
-/* 确保模态框内容不会溢出 */
-.max-w-sm {
-  max-width: 24rem;
-}
-</style>

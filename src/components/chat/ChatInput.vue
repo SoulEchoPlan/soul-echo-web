@@ -68,6 +68,3 @@ const handleToggleRecording = () => {
 }
 </script>
 
-<style scoped>
-/* 组件特定样式 */
-</style>

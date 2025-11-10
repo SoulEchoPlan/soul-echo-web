@@ -133,18 +133,3 @@ watch(
 )
 </script>
 
-<style scoped>
-/* 动画效果 */
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-bounce {
-  animation: bounce 1s infinite;
-}
-</style>

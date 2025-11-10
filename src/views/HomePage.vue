@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="flex flex-col h-screen bg-gray-900 text-white antialiased">
+  <div id="app" class="flex flex-col h-screen">
     <!-- 导航栏 -->
     <nav class="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -119,6 +119,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-/* 全局样式已在 style.css 中定义 */
-</style>

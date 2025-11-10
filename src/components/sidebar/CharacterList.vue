@@ -78,31 +78,3 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 280px;
-  max-width: 360px;
-  background-color: var(--panel-bg);
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: var(--shadow);
-}
-
-.character-list {
-  list-style: none;
-  overflow-y: auto;
-  flex-grow: 1;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
-}
-
-.loading-item,
-.empty-item {
-  padding: 2rem;
-  text-align: center;
-  color: var(--text-muted);
-}
-</style>

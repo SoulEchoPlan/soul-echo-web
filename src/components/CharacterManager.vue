@@ -7,7 +7,7 @@
       </div>
       <button
         @click="openCreateModal"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2"
       >
         <Plus class="h-5 w-5" />
         创建新角色
@@ -39,7 +39,7 @@
           <tr
             v-for="character in characters"
             :key="character.id"
-            class="border-b border-gray-700 hover:bg-gray-700/30 transition-colors"
+            class="border-b border-gray-700"
           >
             <td class="p-4">
               <img
@@ -54,15 +54,13 @@
             <td class="p-4 text-right flex gap-4 justify-end">
               <button
                 @click="openEditModal(character)"
-                class="text-blue-400 hover:text-blue-300 transition-colors"
-                title="编辑"
+                class="text-blue-400 hover:text-blue-300 edit-btn"
               >
                 <Edit class="h-5 w-5" />
               </button>
               <button
                 @click="deleteCharacter(character)"
-                class="text-red-400 hover:text-red-300 transition-colors"
-                title="删除"
+                class="text-red-400 hover:text-red-300 delete-btn"
               >
                 <Trash2 class="h-5 w-5" />
               </button>
@@ -74,6 +72,7 @@
 
     <!-- 创建/编辑角色 Modal -->
     <div
+      id="character-modal"
       v-if="showModal"
       class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
       @click.self="closeModal"
@@ -82,13 +81,14 @@
         <form @submit.prevent="handleSubmit">
           <div class="p-6">
             <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-bold">
+              <h2 id="modal-title" class="text-xl font-bold">
                 {{ isEditing ? '编辑角色' : '创建新角色' }}
               </h2>
               <button
                 type="button"
+                id="close-modal-btn"
                 @click="closeModal"
-                class="text-gray-400 hover:text-white transition-colors"
+                class="text-gray-400 hover:text-white"
               >
                 <X class="h-6 w-6" />
               </button>
@@ -105,7 +105,7 @@
                   id="character-name"
                   placeholder="例如：福尔摩斯"
                   required
-                  class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                  class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
               </div>
 
@@ -119,7 +119,7 @@
                   rows="4"
                   placeholder="详细描述角色的性格、背景、说话风格等..."
                   required
-                  class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-400 resize-none"
+                  class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 ></textarea>
               </div>
 
@@ -133,33 +133,8 @@
                   id="character-avatar-url"
                   placeholder="https://..."
                   required
-                  class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-400"
+                  class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-              </div>
-
-              <div>
-                <label for="character-voice-id" class="block text-sm font-medium text-gray-300 mb-1">
-                  语音ID (可选)
-                </label>
-                <input
-                  v-model="formData.voiceId"
-                  type="text"
-                  id="character-voice-id"
-                  placeholder="语音模型ID"
-                  class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-400"
-                >
-              </div>
-
-              <div class="flex items-center">
-                <input
-                  v-model="formData.isPublic"
-                  type="checkbox"
-                  id="character-is-public"
-                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-600 rounded bg-gray-700"
-                >
-                <label for="character-is-public" class="ml-2 block text-sm text-gray-300">
-                  公开角色
-                </label>
               </div>
             </div>
           </div>
@@ -167,15 +142,16 @@
           <div class="bg-gray-700/50 px-6 py-4 flex justify-end gap-3 rounded-b-lg">
             <button
               type="button"
+              id="cancel-modal-btn"
               @click="closeModal"
-              class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md transition-colors"
+              class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md"
             >
               取消
             </button>
             <button
               type="submit"
               :disabled="submitting"
-              class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md"
             >
               {{ submitting ? '保存中...' : '保存' }}
             </button>
@@ -207,14 +183,14 @@
           <div class="flex justify-end gap-3 mt-6">
             <button
               @click="cancelDelete"
-              class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md transition-colors"
+              class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md"
             >
               取消
             </button>
             <button
               @click="confirmDelete"
               :disabled="deleting"
-              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md"
             >
               {{ deleting ? '删除中...' : '删除' }}
             </button>
@@ -414,37 +390,3 @@ export default {
 }
 </script>
 
-<style scoped>
-/* 确保模态框内容不会溢出 */
-.max-w-md {
-  max-width: 28rem;
-}
-
-.max-w-sm {
-  max-width: 24rem;
-}
-
-/* 表单输入框样式 */
-input[type="text"],
-input[type="url"],
-textarea {
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-input[type="text"]:focus,
-input[type="url"]:focus,
-textarea:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-/* 复选框样式 */
-input[type="checkbox"] {
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-}
-
-input[type="checkbox"]:checked {
-  background-color: #6366f1;
-  border-color: #6366f1;
-}
-</style>

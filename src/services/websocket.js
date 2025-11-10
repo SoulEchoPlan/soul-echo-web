@@ -1,4 +1,5 @@
-const WS_BASE_URL = 'ws://localhost:8080'
+import config from '@/config'
+import { handleWebSocketError, devLog } from '@/utils/errorHandler'
 
 class WebSocketService {
   constructor() {
@@ -20,13 +21,13 @@ class WebSocketService {
       try {
         // 构建WebSocket URL
         const encodedPersonaPrompt = encodeURIComponent(character.personaPrompt || '')
-        const wsUrl = `${WS_BASE_URL}/chat?characterId=${encodeURIComponent(character.id)}&personaPrompt=${encodedPersonaPrompt}`
+        const wsUrl = `${config.WS_BASE_URL}/chat?characterId=${encodeURIComponent(character.id)}&personaPrompt=${encodedPersonaPrompt}`
 
         this.socket = new WebSocket(wsUrl)
         this.socket.binaryType = "arraybuffer"
 
         this.socket.onopen = () => {
-          console.log(`WebSocket连接已建立，角色ID: ${character.id}`)
+          devLog(`WebSocket连接已建立，角色ID: ${character.id}`)
           resolve()
         }
 
@@ -36,8 +37,8 @@ class WebSocketService {
           }
         }
 
-        this.socket.onerror = (error) => {
-          console.error('WebSocket错误:', error)
+      this.socket.onerror = (error) => {
+          handleWebSocketError(error, 'WebSocket连接错误')
           if (this.errorHandler) {
             this.errorHandler(error)
           }
@@ -45,14 +46,14 @@ class WebSocketService {
         }
 
         this.socket.onclose = () => {
-          console.log('WebSocket连接已关闭')
+          devLog('WebSocket连接已关闭')
           if (this.connectionHandler) {
             this.connectionHandler(false)
           }
         }
 
       } catch (error) {
-        console.error('WebSocket初始化失败:', error)
+        handleWebSocketError(error, 'WebSocket初始化失败')
         reject(error)
       }
     })

@@ -24,35 +24,3 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  background-color: var(--panel-bg);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
-}
-
-.app-header .logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.theme-switcher {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--secondary-bg);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.theme-switcher:hover {
-  background-color: var(--border-color);
-}
-</style>

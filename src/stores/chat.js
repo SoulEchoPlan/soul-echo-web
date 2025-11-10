@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { websocketService } from '@/services/websocket'
 import { useCharacterStore } from './character'
 import AudioStreamPlayer from '@/services/AudioStreamPlayer'
+import { handleWebSocketError, handleAudioError, devLog } from '@/utils/errorHandler'
+import { validateMessage, sanitizeHtml } from '@/utils/validators'
+import config from '@/config'
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
@@ -64,29 +67,63 @@ export const useChatStore = defineStore('chat', {
 
     sendMessage(message) {
       if (!this.isConnected) {
-        console.warn('WebSocket未连接，无法发送消息')
+        devLog('WebSocket未连接，无法发送消息', 'Warning')
         return false
       }
 
       try {
-        websocketService.send(message)
+        // 验证消息内容
+        const validation = validateMessage(message)
+        if (!validation.isValid) {
+          handleWebSocketError(new Error(validation.message), '发送消息失败')
+          return false
+        }
+
+        // 清理消息内容，防止XSS攻击
+        const sanitizedMessage = sanitizeHtml(message.trim())
+
+        if (!sanitizedMessage) {
+          handleWebSocketError(new Error('消息内容为空'), '发送消息失败')
+          return false
+        }
+
+        websocketService.send(sanitizedMessage)
+        devLog(`消息已发送: ${sanitizedMessage.substring(0, 50)}...`)
         return true
       } catch (error) {
-        console.error('发送消息失败:', error)
+        handleWebSocketError(error, '发送消息失败')
         return false
       }
     },
 
     addMessage(message, characterId) {
+      if (!characterId) {
+        devLog('角色ID无效，无法添加消息', 'Error')
+        return
+      }
+
       if (!this.conversations[characterId]) {
         this.conversations[characterId] = []
       }
-      // 确保消息对象包含 isComplete 属性（默认为 true）
-      const messageWithComplete = {
-        ...message,
-        isComplete: message.isComplete !== undefined ? message.isComplete : true
+
+      try {
+        // 对消息内容进行安全处理
+        if (message.content) {
+          message.content = sanitizeHtml(message.content)
+        }
+
+        // 确保消息对象包含 isComplete 属性（默认为 true）
+        const messageWithComplete = {
+          ...message,
+          isComplete: message.isComplete !== undefined ? message.isComplete : true,
+          timestamp: message.timestamp || new Date().toISOString()
+        }
+
+        this.conversations[characterId].push(messageWithComplete)
+        devLog(`消息已添加到角色 ${characterId} 的对话记录中`)
+      } catch (error) {
+        handleWebSocketError(error, '添加消息失败')
       }
-      this.conversations[characterId].push(messageWithComplete)
     },
 
     addUserMessage(content, characterId) {
@@ -123,10 +160,19 @@ export const useChatStore = defineStore('chat', {
 
     // 处理接收到的WebSocket消息
     handleIncomingMessage(event, characterId) {
+      if (!characterId) {
+        devLog('收到消息但角色ID无效', 'Error')
+        return
+      }
+
+      // 处理二进制音频数据 - 使用流式播放器
       if (event.data instanceof ArrayBuffer) {
-        // 处理二进制音频数据 - 使用流式播放器
-        console.log('收到音频数据块:', event.data.byteLength, 'bytes')
-        this.audioPlayer.receive(event.data)
+        devLog(`收到音频数据块: ${event.data.byteLength} bytes`)
+        try {
+          this.audioPlayer.receive(event.data)
+        } catch (error) {
+          handleAudioError(error, '音频流处理失败')
+        }
         return
       }
 
@@ -139,7 +185,7 @@ export const useChatStore = defineStore('chat', {
 
         if (jsonData.type === 'user-transcription') {
           // 用户语音识别结果回显
-          console.log('收到用户语音识别:', jsonData.content)
+          devLog(`收到用户语音识别: ${jsonData.content.substring(0, 50)}...`)
           this.addUserMessage(jsonData.content, characterId)
           return
         }
@@ -152,13 +198,13 @@ export const useChatStore = defineStore('chat', {
 
       // 检查是否是流结束信号
       if (textChunk === '[STREAM_END]') {
-        console.log('收到流结束信号')
+        devLog('收到流结束信号')
         const messages = this.conversations[characterId]
         if (messages && messages.length > 0) {
           const lastMessage = messages[messages.length - 1]
           if (lastMessage.type === 'ai' && !lastMessage.isComplete) {
             lastMessage.isComplete = true
-            console.log('AI消息流完成')
+            devLog('AI消息流完成')
           }
         }
         return
@@ -170,12 +216,12 @@ export const useChatStore = defineStore('chat', {
 
       if (lastMessage && lastMessage.type === 'ai' && !lastMessage.isComplete) {
         // 追加到现有的未完成消息
-        lastMessage.content += textChunk
-        console.log('追加文本块:', textChunk)
+        lastMessage.content += sanitizeHtml(textChunk)
+        devLog(`追加文本块: ${textChunk.substring(0, 20)}...`)
       } else {
         // 创建新的未完成 AI 消息
-        console.log('创建新的流式消息:', textChunk)
-        this.addAiMessage(textChunk, characterId, null, false)
+        devLog(`创建新的流式消息: ${textChunk.substring(0, 20)}...`)
+        this.addAiMessage(sanitizeHtml(textChunk), characterId, null, false)
       }
     }
   }
