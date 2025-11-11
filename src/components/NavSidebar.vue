@@ -57,12 +57,12 @@ onMounted(() => {
 }
 
 .nav-sidebar.collapsed {
-  flex: 0 0 80px; /* 收缩后宽度 80px */
+  flex: 0 0 68px; /* 收缩后宽度 68px */
 }
 
 .nav-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin-bottom: 1.5rem;
 }
 
@@ -71,6 +71,10 @@ onMounted(() => {
   border-radius: 8px;
   padding: 0.5rem;
   cursor: pointer;
+}
+
+.nav-sidebar.collapsed .nav-toggle {
+  margin: 0 auto;
 }
 .nav-toggle:hover {
   background: var(--border-color);

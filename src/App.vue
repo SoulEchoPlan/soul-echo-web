@@ -1,6 +1,6 @@
 <template>
   <div class="app-container" :class="themeClass">
-    <TheHeader />
+    <TheHeader :current-theme="currentTheme" @toggle-theme="toggleTheme" />
 
     <div class="main-content">
       <NavSidebar />
@@ -21,9 +21,31 @@ const characterStore = useCharacterStore()
 const currentTheme = ref('dark')
 const themeClass = computed(() => `${currentTheme.value}-mode`)
 
+// 主题切换方法
+const toggleTheme = () => {
+  currentTheme.value = currentTheme.value === 'dark' ? 'light' : 'dark'
+
+  // 替换body的class，而不是toggle
+  if (currentTheme.value === 'dark') {
+    document.body.classList.remove('light-mode')
+    document.body.classList.add('dark-mode')
+  } else {
+    document.body.classList.remove('dark-mode')
+    document.body.classList.add('light-mode')
+  }
+}
+
 onMounted(() => {
-  currentTheme.value = 'light'
-  document.body.classList.add('light-mode')
+  // 自动主题检测：检查系统偏好
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+  if (prefersDark) {
+    currentTheme.value = 'dark'
+    document.body.classList.add('dark-mode')
+  } else {
+    currentTheme.value = 'light'
+    document.body.classList.add('light-mode')
+  }
   // characterStore.fetchCharacters() // 这个逻辑被 CharacterList.vue 自己管理了，App.vue 不再需要它
 })
 </script>

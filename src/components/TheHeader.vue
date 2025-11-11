@@ -4,41 +4,46 @@
       <Bot class="logo-icon" />
       <h1 class="logo">魂语计划</h1>
     </div>
-    <button class="theme-switcher" @click="toggleTheme">
-      <i :data-feather="currentTheme === 'dark' ? 'sun' : 'moon'"></i>
-      <span>{{ currentTheme === 'dark' ? '亮色' : '暗色' }}</span>
+    <button class="theme-switcher" @click="$emit('toggle-theme')">
+      <i :data-feather="props.currentTheme === 'dark' ? 'sun' : 'moon'"></i>
+      <span>{{ props.currentTheme === 'dark' ? '亮色' : '暗色' }}</span>
     </button>
   </header>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import feather from 'feather-icons'
 import { Bot } from 'lucide-vue-next'
 
-const currentTheme = ref('dark')
+// 接收props
+const props = defineProps({
+  currentTheme: {
+    type: String,
+    required: true
+  }
+})
 
-const toggleTheme = () => {
-  currentTheme.value = currentTheme.value === 'dark' ? 'light' : 'dark'
-  document.body.classList.toggle('dark-mode')
-  document.body.classList.toggle('light-mode')
-  updateThemeSwitcherUI()
-}
+// 接收emit
+const emit = defineEmits(['toggle-theme'])
 
 const updateThemeSwitcherUI = () => {
   const iconEl = document.querySelector('.theme-switcher i')
   if (iconEl) {
-    iconEl.setAttribute('data-feather', currentTheme.value === 'dark' ? 'sun' : 'moon')
+    iconEl.setAttribute('data-feather', props.currentTheme === 'dark' ? 'sun' : 'moon')
     feather.replace()
   }
 }
 
-onMounted(() => {
-  // 设置初始主题
-  currentTheme.value = document.body.classList.contains('dark-mode') ? 'dark' : 'light'
+// 监听主题变化
+watch(() => props.currentTheme, () => {
   updateThemeSwitcherUI()
+})
+
+onMounted(() => {
   // 初始化feather图标
   feather.replace()
+  updateThemeSwitcherUI()
 })
 
 onUnmounted(() => {
