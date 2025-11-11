@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 角色扮演聊天</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .character-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* 自定义滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* bg-gray-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* bg-gray-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white antialiased">
+
+<div id="app" class="flex flex-col h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i data-lucide="bot" class="h-8 w-8 text-indigo-400"></i>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#" id="nav-chat" class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium">角色聊天</a>
+                            <a href="#" id="nav-kb" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">知识库管理</a>
+                            <a href="#" id="nav-cm" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">角色管理</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow overflow-hidden">
+        <!-- 角色聊天页面 -->
+        <div id="page-chat" class="h-full">
+            <!-- 角色选择界面 -->
+            <div id="character-selection" class="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-3xl font-bold mb-2">选择你的聊天伙伴</h1>
+                    <p class="text-gray-400 mb-6">搜索或选择一个角色，开始一段沉浸式语音对话。</p>
+
+                    <!-- 搜索框 -->
+                    <div class="mb-8">
+                        <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <i data-lucide="search" class="h-5 w-5 text-gray-400"></i>
+                                </span>
+                            <input type="search" placeholder="搜索角色，例如：哈利波特" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- 角色卡片列表 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <!-- 角色卡片示例 1 -->
+                        <div class="character-card bg-gray-800 rounded-lg overflow-hidden cursor-pointer" data-character-name="哈利波特" data-character-avatar="https://placehold.co/400x400/334155/E2E8F0?text=HP">
+                            <img src="https://placehold.co/400x400/334155/E2E8F0?text=HP" alt="哈利波特" class="w-full h-48 object-cover">
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold">哈利波特</h3>
+                                <p class="text-sm text-gray-400 mt-1">来自霍格沃茨的著名巫师</p>
+                            </div>
+                        </div>
+                        <!-- 角色卡片示例 2 -->
+                        <div class="character-card bg-gray-800 rounded-lg overflow-hidden cursor-pointer" data-character-name="苏格拉底" data-character-avatar="https://placehold.co/400x400/4a5568/E2E8F0?text=Socrates">
+                            <img src="https://placehold.co/400x400/4a5568/E2E8F0?text=Socrates" alt="苏格拉底" class="w-full h-48 object-cover">
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold">苏格拉底</h3>
+                                <p class="text-sm text-gray-400 mt-1">古希腊的伟大哲学家</p>
+                            </div>
+                        </div>
+                        <!-- 角色卡片示例 3 -->
+                        <div class="character-card bg-gray-800 rounded-lg overflow-hidden cursor-pointer" data-character-name="爱因斯坦" data-character-avatar="https://placehold.co/400x400/52525b/E2E8F0?text=Einstein">
+                            <img src="https://placehold.co/400x400/52525b/E2E8F0?text=Einstein" alt="爱因斯坦" class="w-full h-48 object-cover">
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold">爱因斯坦</h3>
+                                <p class="text-sm text-gray-400 mt-1">相对论的创立者</p>
+                            </div>
+                        </div>
+                        <!-- 更多角色... -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 聊天界面 (默认隐藏) -->
+            <div id="chat-interface" class="hidden h-full flex flex-col">
+                <!-- 聊天头部 -->
+                <div class="flex items-center p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0">
+                    <button id="back-to-selection" class="p-2 rounded-full hover:bg-gray-700">
+                        <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                    </button>
+                    <img id="chat-avatar" src="" alt="avatar" class="w-10 h-10 rounded-full ml-4">
+                    <h2 id="chat-character-name" class="text-lg font-semibold ml-3"></h2>
+                </div>
+
+                <!-- 消息区域 -->
+                <div id="chat-messages" class="flex-grow p-6 overflow-y-auto">
+                    <!-- 消息示例 -->
+                    <div class="flex items-start gap-3 mb-6">
+                        <img id="ai-avatar-in-chat" src="https://placehold.co/40x40/334155/E2E8F0?text=AI" class="w-10 h-10 rounded-full">
+                        <div class="bg-gray-700 rounded-lg rounded-tl-none p-3 max-w-lg">
+                            <p class="text-sm">你好，我是<span id="ai-name-in-chat"></span>。有什么我可以帮助你的吗？让我们开始对话吧。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 输入和控制区域 -->
+                <div class="p-6 border-t border-gray-700 bg-gray-800/70 flex-shrink-0">
+                    <div class="flex flex-col items-center">
+                        <div id="status-indicator" class="text-sm text-gray-400 h-5 mb-3">点击下方按钮开始说话</div>
+                        <button id="record-button" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-16 h-16 flex items-center justify-center transition-all duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900">
+                            <i data-lucide="mic" class="h-8 w-8"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 知识库管理页面 (默认隐藏) -->
+        <div id="page-kb" class="hidden p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
+            <div class="max-w-7xl mx-auto">
+                <h1 class="text-3xl font-bold mb-2">角色知识库管理</h1>
+                <p class="text-gray-400 mb-8">为你的 AI 角色上传、管理和同步知识，打造独特的对话体验。</p>
+                <div class="mb-6">
+                    <label for="kb-character-select" class="block text-sm font-medium text-gray-300 mb-2">选择要管理的角色</label>
+                    <select id="kb-character-select" class="w-full max-w-xs bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option>哈利波特</option>
+                        <option>苏格拉底</option>
+                        <option>爱因斯坦</option>
+                    </select>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-6 border-2 border-dashed border-gray-700 hover:border-indigo-500 transition-colors">
+                    <h2 class="text-xl font-semibold mb-4">上传新知识</h2>
+                    <div class="flex flex-col items-center justify-center text-center">
+                        <i data-lucide="upload-cloud" class="h-12 w-12 text-gray-500 mb-2"></i>
+                        <p class="text-gray-400 mb-4">拖拽文件到这里，或点击上传</p>
+                        <p class="text-xs text-gray-500 mb-4">支持 TXT, PDF, MD 等格式</p>
+                        <input type="file" class="hidden" id="file-upload">
+                        <button onclick="document.getElementById('file-upload').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">选择文件</button>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <h2 class="text-xl font-semibold mb-4">当前知识源</h2>
+                    <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-700/50">
+                            <tr>
+                                <th class="p-4 text-sm font-semibold">文件名</th>
+                                <th class="p-4 text-sm font-semibold">类型</th>
+                                <th class="p-4 text-sm font-semibold">状态</th>
+                                <th class="p-4 text-sm font-semibold text-right">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr class="border-b border-gray-700">
+                                <td class="p-4">魔法史.pdf</td>
+                                <td class="p-4"><span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-2 py-1 rounded-full">PDF</span></td>
+                                <td class="p-4"><span class="text-green-400">已索引</span></td>
+                                <td class="p-4 text-right"><button class="text-red-400 hover:text-red-300"><i data-lucide="trash-2" class="h-5 w-5"></i></button></td>
+                            </tr>
+                            <tr class="border-b border-gray-700">
+                                <td class="p-4">霍格沃茨：一段校史.txt</td>
+                                <td class="p-4"><span class="bg-green-900/50 text-green-300 text-xs font-medium px-2 py-1 rounded-full">TXT</span></td>
+                                <td class="p-4"><span class="text-green-400">已索引</span></td>
+                                <td class="p-4 text-right"><button class="text-red-400 hover:text-red-300"><i data-lucide="trash-2" class="h-5 w-5"></i></button></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 角色管理页面 (默认隐藏) -->
+        <div id="page-cm" class="hidden p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold mb-2">角色管理</h1>
+                        <p class="text-gray-400">创建、编辑和管理你的 AI 角色。</p>
+                    </div>
+                    <button id="create-character-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                        <i data-lucide="plus" class="h-5 w-5"></i>
+                        创建新角色
+                    </button>
+                </div>
+
+                <!-- 角色列表 -->
+                <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-700/50">
+                        <tr>
+                            <th class="p-4 text-sm font-semibold">头像</th>
+                            <th class="p-4 text-sm font-semibold">角色名称</th>
+                            <th class="p-4 text-sm font-semibold">描述</th>
+                            <th class="p-4 text-sm font-semibold text-right">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- 角色行 示例 1 -->
+                        <tr class="border-b border-gray-700">
+                            <td class="p-4"><img src="https://placehold.co/40x40/334155/E2E8F0?text=HP" class="w-10 h-10 rounded-full object-cover"></td>
+                            <td class="p-4 font-medium">哈利波特</td>
+                            <td class="p-4 text-sm text-gray-400 max-w-sm truncate">来自霍格沃茨的著名巫师</td>
+                            <td class="p-4 text-right flex gap-4 justify-end"><button class="text-blue-400 hover:text-blue-300 edit-btn"><i data-lucide="edit" class="h-5 w-5"></i></button><button class="text-red-400 hover:text-red-300 delete-btn"><i data-lucide="trash-2" class="h-5 w-5"></i></button></td>
+                        </tr>
+                        <!-- 角色行 示例 2 -->
+                        <tr class="border-b border-gray-700">
+                            <td class="p-4"><img src="https://placehold.co/40x40/4a5568/E2E8F0?text=Socrates" class="w-10 h-10 rounded-full object-cover"></td>
+                            <td class="p-4 font-medium">苏格拉底</td>
+                            <td class="p-4 text-sm text-gray-400 max-w-sm truncate">古希腊的伟大哲学家</td>
+                            <td class="p-4 text-right flex gap-4 justify-end"><button class="text-blue-400 hover:text-blue-300 edit-btn"><i data-lucide="edit" class="h-5 w-5"></i></button><button class="text-red-400 hover:text-red-300 delete-btn"><i data-lucide="trash-2" class="h-5 w-5"></i></button></td>
+                        </tr>
+                        <!-- 角色行 示例 3 -->
+                        <tr class="border-b border-gray-700">
+                            <td class="p-4"><img src="https://placehold.co/40x40/52525b/E2E8F0?text=Einstein" class="w-10 h-10 rounded-full object-cover"></td>
+                            <td class="p-4 font-medium">爱因斯坦</td>
+                            <td class="p-4 text-sm text-gray-400 max-w-sm truncate">相对论的创立者</td>
+                            <td class="p-4 text-right flex gap-4 justify-end"><button class="text-blue-400 hover:text-blue-300 edit-btn"><i data-lucide="edit" class="h-5 w-5"></i></button><button class="text-red-400 hover:text-red-300 delete-btn"><i data-lucide="trash-2" class="h-5 w-5"></i></button></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 创建/编辑角色 Modal -->
+    <div id="character-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all">
+            <form id="character-form">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="modal-title" class="text-xl font-bold">创建新角色</h2>
+                        <button type="button" id="close-modal-btn" class="text-gray-400 hover:text-white"><i data-lucide="x" class="h-6 w-6"></i></button>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="character-name" class="block text-sm font-medium text-gray-300 mb-1">角色名称</label>
+                            <input type="text" id="character-name" placeholder="例如：福尔摩斯" required class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="character-description" class="block text-sm font-medium text-gray-300 mb-1">角色设定 (Persona)</label>
+                            <textarea id="character-description" rows="4" placeholder="详细描述角色的性格、背景、说话风格等..." required class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                        <div>
+                            <label for="character-avatar-url" class="block text-sm font-medium text-gray-300 mb-1">头像 URL</label>
+                            <input type="url" id="character-avatar-url" placeholder="https://..." required class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-700/50 px-6 py-4 flex justify-end gap-3 rounded-b-lg">
+                    <button type="button" id="cancel-modal-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md">取消</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 全局通知 -->
+    <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg transform translate-x-[120%] transition-transform duration-300 z-50">
+        操作成功！
+    </div>
+</div>
+
+<script>
+    // 初始化 Lucide 图标
+    lucide.createIcons();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // 页面元素
+        const pageChat = document.getElementById('page-chat');
+        const pageKb = document.getElementById('page-kb');
+        const pageCm = document.getElementById('page-cm');
+        const navChat = document.getElementById('nav-chat');
+        const navKb = document.getElementById('nav-kb');
+        const navCm = document.getElementById('nav-cm');
+
+        const characterSelection = document.getElementById('character-selection');
+        const chatInterface = document.getElementById('chat-interface');
+        const backToSelectionBtn = document.getElementById('back-to-selection');
+        const characterCards = document.querySelectorAll('.character-card');
+
+        const chatAvatar = document.getElementById('chat-avatar');
+        const chatCharacterName = document.getElementById('chat-character-name');
+        const aiAvatarInChat = document.getElementById('ai-avatar-in-chat');
+        const aiNameInChat = document.getElementById('ai-name-in-chat');
+
+        const recordButton = document.getElementById('record-button');
+        const statusIndicator = document.getElementById('status-indicator');
+        const chatMessages = document.getElementById('chat-messages');
+
+        const characterModal = document.getElementById('character-modal');
+        const createCharacterBtn = document.getElementById('create-character-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const cancelModalBtn = document.getElementById('cancel-modal-btn');
+        const characterForm = document.getElementById('character-form');
+        const modalTitle = document.getElementById('modal-title');
+        const notification = document.getElementById('notification');
+
+        let isRecording = false;
+
+        // 导航切换逻辑
+        function showPage(pageId) {
+            [pageChat, pageKb, pageCm].forEach(p => p.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+
+            [navChat, navKb, navCm].forEach(nav => {
+                nav.classList.remove('bg-gray-900', 'text-white');
+                nav.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            });
+
+            let activeNav;
+            if (pageId === 'page-chat') activeNav = navChat;
+            if (pageId === 'page-kb') activeNav = navKb;
+            if (pageId === 'page-cm') activeNav = navCm;
+
+            if (activeNav) {
+                activeNav.classList.add('bg-gray-900', 'text-white');
+                activeNav.classList.remove('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            }
+        }
+
+        navChat.addEventListener('click', (e) => { e.preventDefault(); showPage('page-chat'); });
+        navKb.addEventListener('click', (e) => { e.preventDefault(); showPage('page-kb'); });
+        navCm.addEventListener('click', (e) => { e.preventDefault(); showPage('page-cm'); });
+
+
+        // 聊天页面内部切换逻辑
+        function showChatInterface(character) {
+            const { name, avatar } = character;
+            chatCharacterName.textContent = name;
+            chatAvatar.src = avatar;
+            aiAvatarInChat.src = avatar;
+            aiNameInChat.textContent = name;
+
+            characterSelection.classList.add('hidden');
+            chatInterface.classList.remove('hidden');
+            chatInterface.classList.add('flex');
+        }
+
+        function showCharacterSelection() {
+            chatInterface.classList.add('hidden');
+            chatInterface.classList.remove('flex');
+            characterSelection.classList.remove('hidden');
+        }
+
+        characterCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const character = { name: card.dataset.characterName, avatar: card.dataset.characterAvatar };
+                showChatInterface(character);
+            });
+        });
+
+        backToSelectionBtn.addEventListener('click', showCharacterSelection);
+
+        // 模拟语音聊天交互
+        recordButton.addEventListener('click', () => {
+            isRecording = !isRecording;
+            if (isRecording) {
+                recordButton.innerHTML = `<i data-lucide="square" class="h-7 w-7"></i>`;
+                recordButton.classList.replace('bg-indigo-600', 'bg-red-600');
+                recordButton.classList.replace('hover:bg-indigo-700', 'hover:bg-red-700');
+                statusIndicator.textContent = '正在聆听...';
+            } else {
+                recordButton.innerHTML = `<i data-lucide="mic" class="h-8 w-8"></i>`;
+                recordButton.classList.replace('bg-red-600', 'bg-indigo-600');
+                recordButton.classList.replace('hover:bg-red-700', 'hover:bg-indigo-700');
+                statusIndicator.textContent = '正在思考...';
+                addMessage("这只是一个前端模拟，实际上应该发送我的语音识别文本。", 'user');
+                setTimeout(() => {
+                    statusIndicator.textContent = '正在生成语音...';
+                    addMessage("我明白了。这是一个模拟回复，用于演示 AI 如何响应。", 'ai');
+                    statusIndicator.textContent = '点击下方按钮开始说话';
+                }, 2000);
+            }
+            lucide.createIcons();
+        });
+
+        // 添加消息到聊天窗口
+        function addMessage(text, sender) {
+            const messageElement = document.createElement('div');
+            if (sender === 'user') {
+                messageElement.className = 'flex items-start gap-3 mb-6 justify-end';
+                messageElement.innerHTML = `<div class="bg-indigo-600 rounded-lg rounded-br-none p-3 max-w-lg"><p class="text-sm text-white">${text}</p></div><img src="https://placehold.co/40x40/94a3b8/FFFFFF?text=You" class="w-10 h-10 rounded-full">`;
+            } else {
+                messageElement.className = 'flex items-start gap-3 mb-6';
+                messageElement.innerHTML = `<img src="${chatAvatar.src}" class="w-10 h-10 rounded-full" alt=""><div class="bg-gray-700 rounded-lg rounded-tl-none p-3 max-w-lg"><p class="text-sm">${text}</p></div>`;
+            }
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // --- 新增：角色管理 Modal 和通知逻辑 ---
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.remove('translate-x-[120%]');
+            setTimeout(() => {
+                notification.classList.add('translate-x-[120%]');
+            }, 3000);
+        }
+
+        function openModal(isEdit = false) {
+            modalTitle.textContent = isEdit ? '编辑角色' : '创建新角色';
+            characterModal.classList.remove('hidden');
+            if (isEdit) {
+                // 模拟填充编辑数据
+                document.getElementById('character-name').value = '哈利波特';
+                document.getElementById('character-description').value = '来自霍格沃茨的著名巫师';
+                document.getElementById('character-avatar-url').value = 'https://placehold.co/400x400/334155/E2E8F0?text=HP';
+            }
+        }
+
+        function closeModal() {
+            characterModal.classList.add('hidden');
+            characterForm.reset();
+        }
+
+        createCharacterBtn.addEventListener('click', () => openModal(false));
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelModalBtn.addEventListener('click', closeModal);
+        characterModal.addEventListener('click', (e) => { if (e.target === characterModal) closeModal(); });
+
+        characterForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            showNotification('角色已保存！（模拟）');
+            cl,oseModal();
+        });
+
+        pageCm.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-btn')) openModal(true);
+            if (e.target.closest('.delete-btn')) {
+                // 在真实应用中，这里应该弹出一个自定义的确认对话框
+                console.log('删除操作被触发（模拟）');
+                showNotification('角色已删除！（模拟）');
+            }
+        });
+
+        // 初始化显示聊天页面
+        showPage('page-chat');
+    });
+</script>
+</body>
+</html>
