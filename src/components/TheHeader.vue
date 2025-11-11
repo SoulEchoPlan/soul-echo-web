@@ -1,6 +1,9 @@
 <template>
   <header class="app-header">
-    <h1 class="logo">魂语计划</h1>
+    <div class="logo-container">
+      <Bot class="logo-icon" />
+      <h1 class="logo">魂语计划</h1>
+    </div>
     <button class="theme-switcher" @click="toggleTheme">
       <i :data-feather="currentTheme === 'dark' ? 'sun' : 'moon'"></i>
       <span>{{ currentTheme === 'dark' ? '亮色' : '暗色' }}</span>
@@ -11,6 +14,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import feather from 'feather-icons'
+import { Bot } from 'lucide-vue-next'
 
 const currentTheme = ref('dark')
 
@@ -51,6 +55,22 @@ onUnmounted(() => {
   background-color: var(--panel-bg);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  color: var(--accent-color);
+}
+
+.app-header .logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color);
 }
 
 .app-header .logo {

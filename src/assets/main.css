@@ -90,6 +90,40 @@ button, input, textarea {
   gap: 1rem;
 }
 
+/* 将 RouterView 区域（即 ChatView, KnowledgeBaseView 等）
+  设置为 flex: 1，使其填充 .main-content 的剩余空间
+*/
+.main-content > *:last-child {
+    flex: 1;
+    overflow: hidden; /* 确保视图内部可以滚动 */
+}
+
+/* --- 4. (新增) 移植 example.html 的全局样式 --- */
+
+/* 角色卡片 (用于 CharacterManager) */
+.character-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.character-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* 自定义滚动条 (全局) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--secondary-bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
 /* --- 7. Responsive Design --- */
 @media (max-width: 992px) {
   .main-content {
