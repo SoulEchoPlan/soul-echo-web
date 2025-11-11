@@ -1,6 +1,5 @@
 <template>
   <div class="sidebar">
-    <CharacterSearch @search="handleSearch" @add="handleAdd" />
     <ul class="character-list">
       <CharacterListItem
         v-for="character in displayCharacters"
@@ -20,34 +19,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useCharacterStore } from '@/stores/character'
 import { useChatStore } from '@/stores/chat'
 import CharacterListItem from './CharacterListItem.vue'
-import CharacterSearch from './CharacterSearch.vue'
 
 const characterStore = useCharacterStore()
 const chatStore = useChatStore()
 
-const searchTerm = ref('')
 const isLoading = computed(() => characterStore.isLoading)
 const activeCharacterId = computed(() => characterStore.activeCharacterId)
 
+// 始终返回所有角色，移除搜索逻辑
 const displayCharacters = computed(() => {
-  if (searchTerm.value) {
-    return characterStore.searchCharacters(searchTerm.value)
-  }
   return characterStore.characters
 })
-
-const handleSearch = (term) => {
-  searchTerm.value = term
-}
-
-const handleAdd = () => {
-  // 新增角色后重新加载
-  characterStore.fetchCharacters()
-}
 
 const handleSelect = async (characterId) => {
   const previousCharacterId = activeCharacterId.value
