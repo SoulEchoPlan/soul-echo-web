@@ -54,10 +54,10 @@ onMounted(() => {
 
 <style scoped>
 .nav-sidebar {
-  flex: 0 0 200px; /* 展开宽度 200px */
+  flex: 0 0 200px;
   background-color: var(--panel-bg);
   border-radius: 12px;
-  padding: 1rem 0; /* 仅保留上下内边距，移除左右 */
+  padding: 1rem 0;
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -65,7 +65,7 @@ onMounted(() => {
 }
 
 .nav-sidebar.collapsed {
-  flex: 0 0 60px; /* 收起宽度 60px */
+  flex: 0 0 72px;
 }
 
 .nav-header {
@@ -73,34 +73,43 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 1.5rem;
   width: 100%;
-  padding-left: 12px; /* 展开状态左侧对齐边距 */
+  padding-left: 12px;
+  /* 增加高度限制，防止抖动 */
+  min-height: 50px;
 }
 
 .nav-sidebar.collapsed .nav-header {
-  justify-content: center; /* 收起状态居中 */
-  padding-left: 0; /* 移除左边距 */
+  justify-content: center;
+  padding-left: 0;
 }
 
 .nav-toggle {
-  width: 100%; /* 占满容器宽度 */
-  height: 50px; /* 统一高度 */
-  background: transparent; /* 移除默认背景 */
+  /* 修改：宽度自适应，但最大不超过 50px */
+  width: 100%;
+  max-width: 50px;
+  height: 50px;
+  background: transparent;
   border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* 展开状态左对齐 */
+  justify-content: flex-start;
   border: none;
-  padding: 0; /* 内部padding由icon-container控制 */
+  padding: 0;
   transition: all 0.2s ease;
 }
 
+/* 核心修复：折叠状态下的按钮样式 */
 .nav-sidebar.collapsed .nav-toggle {
-  justify-content: center; /* 收起状态居中对齐 */
+  justify-content: center;
+  width: 40px;       /* 缩小宽度 */
+  height: 40px;      /* 缩小高度 */
+  margin: 0 auto;    /* 居中 */
+  border-radius: 50%;
 }
 
 .nav-toggle:hover {
-  background: var(--secondary-bg); /* hover时与nav-link一致 */
+  background: var(--secondary-bg);
 }
 
 .nav-menu {
@@ -108,31 +117,31 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0 12px; /* 左右内边距与nav-header保持一致 */
+  padding: 0 12px;
 }
 
 .nav-sidebar.collapsed .nav-menu {
-  padding: 0; /* 收起状态移除左右内边距 */
+  padding: 0;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* 展开状态左对齐 */
-  height: 50px; /* 与nav-toggle统一高度 */
-  padding: 0; /* 移除padding，由子元素控制 */
+  justify-content: flex-start;
+  height: 50px;
+  padding: 0;
   border-radius: 8px;
   text-decoration: none;
   color: var(--text-muted);
-  gap: 12px; /* 图标与文本间距 */
+  gap: 12px;
   overflow: hidden;
   white-space: nowrap;
   transition: all 0.2s ease;
 }
 
 .nav-sidebar.collapsed .nav-link {
-  justify-content: center; /* 收起状态居中对齐 */
-  gap: 0; /* 移除间距 */
+  justify-content: center;
+  gap: 0;
 }
 
 .nav-link:hover {
@@ -146,14 +155,13 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* 图标容器 - 确保所有图标严格对齐 */
 .icon-container {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
-  flex-shrink: 0; /* 防止压缩 */
+  flex-shrink: 0;
 }
 
 .icon-container i {
@@ -161,7 +169,6 @@ onMounted(() => {
   height: 20px;
 }
 
-/* 收起状态下的样式 */
 .nav-sidebar.collapsed .nav-text {
   opacity: 0;
   width: 0;
@@ -169,7 +176,6 @@ onMounted(() => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 文本过渡动画 */
 .nav-text {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
