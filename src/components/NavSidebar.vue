@@ -46,24 +46,26 @@ onMounted(() => {
 
 <style scoped>
 .nav-sidebar {
-  flex: 0 0 240px; /* 默认宽度 240px */
+  flex: 0 0 200px; /* 展开宽度 200px */
   background-color: var(--panel-bg);
   border-radius: 12px;
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow);
 }
 
 .nav-sidebar.collapsed {
-  flex: 0 0 68px; /* 收缩后宽度 68px */
+  flex: 0 0 60px; /* 收起宽度 60px */
 }
 
 .nav-header {
   display: flex;
   justify-content: flex-start;
+  align-items: center;
   margin-bottom: 1.5rem;
+  height: 40px; /* 固定高度确保对齐 */
 }
 
 .nav-toggle {
@@ -71,30 +73,48 @@ onMounted(() => {
   border-radius: 8px;
   padding: 0.5rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; /* 固定宽度 */
+  height: 40px; /* 固定高度 */
 }
 
 .nav-sidebar.collapsed .nav-toggle {
   margin: 0 auto;
 }
+
 .nav-toggle:hover {
   background: var(--border-color);
 }
 
 .nav-menu {
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* 确保左对齐 */
   padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
   border-radius: 8px;
   text-decoration: none;
   color: var(--text-muted);
   gap: 1rem;
   overflow: hidden;
   white-space: nowrap;
+  height: 40px; /* 固定高度与toggle对齐 */
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.nav-link i {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .nav-link:hover {
@@ -111,8 +131,24 @@ onMounted(() => {
 .nav-sidebar.collapsed .nav-text {
   opacity: 0;
   width: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .nav-sidebar.collapsed .nav-link {
   justify-content: center;
+  padding: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 确保图标在收起状态下居中对齐 */
+.nav-sidebar.collapsed .nav-link i {
+  margin: 0;
+}
+
+/* 展开状态下的文本过渡 */
+.nav-text {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
 }
 </style>
