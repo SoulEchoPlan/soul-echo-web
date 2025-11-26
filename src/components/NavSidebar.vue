@@ -142,6 +142,10 @@ onMounted(() => {
 .nav-sidebar.collapsed .nav-link {
   justify-content: center;
   gap: 0;
+  width: 50px;
+  height: 50px;
+  margin: 0 auto;
+  border-radius: 8px;
 }
 
 .nav-link:hover {
