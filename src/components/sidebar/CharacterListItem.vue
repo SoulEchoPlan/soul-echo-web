@@ -50,6 +50,7 @@ const handleSelect = () => {
   border: 2px solid transparent;
   transition: background-color 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
+  gap: 1rem;
 }
 
 .character-item:hover {
@@ -61,15 +62,27 @@ const handleSelect = () => {
   border-color: var(--accent-color);
 }
 
+.character-info {
+  flex: 1;
+  min-width: 0; /* 允许收缩 */
+  overflow: hidden;
+}
+
 .character-info .name {
   font-weight: 700;
   font-size: 1.1rem;
   margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .character-info .tags {
   font-size: 0.85rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .character-item .select-btn {
@@ -79,6 +92,8 @@ const handleSelect = () => {
   color: white;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  flex-shrink: 0; /* 强制保持宽度，不允许压缩 */
+  white-space: nowrap;
 }
 
 .character-item .select-btn:hover {

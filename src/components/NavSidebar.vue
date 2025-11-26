@@ -2,26 +2,34 @@
   <nav class="nav-sidebar" :class="{ collapsed: isCollapsed }">
     <div class="nav-header">
       <button class="nav-toggle" @click="toggleCollapse">
-        <i data-feather="menu"></i>
+        <div class="icon-container">
+          <i data-feather="menu"></i>
+        </div>
       </button>
     </div>
 
     <ul class="nav-menu">
       <li>
         <RouterLink to="/chat" class="nav-link" title="角色聊天">
-          <i data-feather="message-circle"></i>
+          <div class="icon-container">
+            <i data-feather="message-circle"></i>
+          </div>
           <span class="nav-text">角色聊天</span>
         </RouterLink>
       </li>
       <li>
         <RouterLink to="/management" class="nav-link" title="角色管理">
-          <i data-feather="users"></i>
+          <div class="icon-container">
+            <i data-feather="users"></i>
+          </div>
           <span class="nav-text">角色管理</span>
         </RouterLink>
       </li>
       <li>
         <RouterLink to="/knowledge-base" class="nav-link" title="知识库管理">
-          <i data-feather="database"></i>
+          <div class="icon-container">
+            <i data-feather="database"></i>
+          </div>
           <span class="nav-text">知识库管理</span>
         </RouterLink>
       </li>
@@ -49,7 +57,7 @@ onMounted(() => {
   flex: 0 0 200px; /* 展开宽度 200px */
   background-color: var(--panel-bg);
   border-radius: 12px;
-  padding: 1rem;
+  padding: 1rem 0; /* 仅保留上下内边距，移除左右 */
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -62,30 +70,37 @@ onMounted(() => {
 
 .nav-header {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
   margin-bottom: 1.5rem;
-  height: 40px; /* 固定高度确保对齐 */
+  width: 100%;
+  padding-left: 12px; /* 展开状态左侧对齐边距 */
+}
+
+.nav-sidebar.collapsed .nav-header {
+  justify-content: center; /* 收起状态居中 */
+  padding-left: 0; /* 移除左边距 */
 }
 
 .nav-toggle {
-  background: var(--secondary-bg);
+  width: 100%; /* 占满容器宽度 */
+  height: 50px; /* 统一高度 */
+  background: transparent; /* 移除默认背景 */
   border-radius: 8px;
-  padding: 0.5rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px; /* 固定宽度 */
-  height: 40px; /* 固定高度 */
+  justify-content: flex-start; /* 展开状态左对齐 */
+  border: none;
+  padding: 0; /* 内部padding由icon-container控制 */
+  transition: all 0.2s ease;
 }
 
 .nav-sidebar.collapsed .nav-toggle {
-  margin: 0 auto;
+  justify-content: center; /* 收起状态居中对齐 */
 }
 
 .nav-toggle:hover {
-  background: var(--border-color);
+  background: var(--secondary-bg); /* hover时与nav-link一致 */
 }
 
 .nav-menu {
@@ -93,28 +108,31 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding: 0 12px; /* 左右内边距与nav-header保持一致 */
+}
+
+.nav-sidebar.collapsed .nav-menu {
+  padding: 0; /* 收起状态移除左右内边距 */
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* 确保左对齐 */
-  padding: 0.75rem 1rem;
+  justify-content: flex-start; /* 展开状态左对齐 */
+  height: 50px; /* 与nav-toggle统一高度 */
+  padding: 0; /* 移除padding，由子元素控制 */
   border-radius: 8px;
   text-decoration: none;
   color: var(--text-muted);
-  gap: 1rem;
+  gap: 12px; /* 图标与文本间距 */
   overflow: hidden;
   white-space: nowrap;
-  height: 40px; /* 固定高度与toggle对齐 */
-  box-sizing: border-box;
   transition: all 0.2s ease;
 }
 
-.nav-link i {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
+.nav-sidebar.collapsed .nav-link {
+  justify-content: center; /* 收起状态居中对齐 */
+  gap: 0; /* 移除间距 */
 }
 
 .nav-link:hover {
@@ -128,6 +146,22 @@ onMounted(() => {
   font-weight: 500;
 }
 
+/* 图标容器 - 确保所有图标严格对齐 */
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0; /* 防止压缩 */
+}
+
+.icon-container i {
+  width: 20px;
+  height: 20px;
+}
+
+/* 收起状态下的样式 */
 .nav-sidebar.collapsed .nav-text {
   opacity: 0;
   width: 0;
@@ -135,18 +169,7 @@ onMounted(() => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.nav-sidebar.collapsed .nav-link {
-  justify-content: center;
-  padding: 0.75rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 确保图标在收起状态下居中对齐 */
-.nav-sidebar.collapsed .nav-link i {
-  margin: 0;
-}
-
-/* 展开状态下的文本过渡 */
+/* 文本过渡动画 */
 .nav-text {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
