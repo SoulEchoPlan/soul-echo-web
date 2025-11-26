@@ -69,8 +69,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-width: 280px;
-  max-width: 360px;
+  width: 100%; /* 继承父组件的宽度 */
   background-color: var(--panel-bg);
   border-radius: 12px;
   padding: 1.25rem;

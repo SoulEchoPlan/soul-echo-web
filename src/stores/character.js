@@ -66,6 +66,34 @@ export const useCharacterStore = defineStore('character', {
       }
     },
 
+    async updateCharacter(id, characterData) {
+      try {
+        await api.updateCharacter(id, characterData)
+        // 重新获取角色列表
+        await this.fetchCharacters()
+        return true
+      } catch (error) {
+        console.error('更新角色失败:', error)
+        throw error
+      }
+    },
+
+    async deleteCharacter(id) {
+      try {
+        await api.deleteCharacter(id)
+        // 从本地数组中移除该角色
+        this.characters = this.characters.filter(char => char.id !== id)
+        // 如果删除的是当前激活的角色，则重置激活状态
+        if (this.activeCharacterId === id) {
+          this.activeCharacterId = this.characters.length > 0 ? this.characters[0].id : null
+        }
+        return true
+      } catch (error) {
+        console.error('删除角色失败:', error)
+        throw error
+      }
+    },
+
     searchCharacters(searchTerm) {
       if (!searchTerm) {
         return this.characters

@@ -2,7 +2,6 @@
   <div class="chat-history" ref="chatHistoryRef">
     <!-- 角色问候信息 -->
     <div v-if="showGreeting" class="greeting-wrapper">
-      <div class="char-name">{{ activeCharacter?.name }}</div>
       <div class="char-greeting">
         {{ activeCharacter?.personaPrompt ? activeCharacter.personaPrompt.substring(0, 100) + '...' : `你好，我是${activeCharacter?.name}` }}
       </div>
@@ -98,12 +97,6 @@ watch([isConnecting, isConnected], () => {
 
 .greeting-wrapper {
   margin-bottom: 1.5rem;
-}
-
-.greeting-wrapper .char-name {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
 }
 
 .greeting-wrapper .char-greeting {
