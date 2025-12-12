@@ -1,4 +1,4 @@
-const WS_BASE_URL = 'ws://localhost:8080'
+const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080'
 
 class WebSocketService {
   constructor() {

@@ -32,6 +32,7 @@
 import {ref, nextTick, onMounted, onUnmounted} from 'vue'
 import {useChatStore} from '@/stores/chat'
 import {useCharacterStore} from '@/stores/character'
+import {ModernMicrophoneStreamer} from '@/utils/ModernMicrophoneStreamer'
 import feather from 'feather-icons'
 
 const chatStore = useChatStore()
@@ -41,146 +42,17 @@ const messageText = ref('')
 const isRecording = ref(false)
 const textareaRef = ref(null)
 
-// 麦克风录音器
-class MicrophoneStreamer {
-  constructor() {
-    this.audioContext = null;
-    this.mediaStreamSource = null;
-    this.scriptProcessor = null;
-    this.isRecording = false;
-    this.hasPermission = false;
-    this.audioStream = null;
+// 使用现代 AudioWorklet 的麦克风录音器
+const microphoneStreamer = new ModernMicrophoneStreamer()
 
-    // --- 新增属性 ---
-    this.targetSampleRate = 16000; // 阿里云要求的采样率
+// 设置音频数据处理回调
+microphoneStreamer.onAudioData((pcmData) => {
+  if (chatStore.isConnected) {
+    chatStore.sendMessage(pcmData);
+  } else {
+    console.warn('WebSocket未连接，无法发送音频数据');
   }
-
-  async initializeStream() {
-    if (this.audioStream && this.audioStream.active) {
-      return this.audioStream;
-    }
-    try {
-      this.audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
-      this.hasPermission = true;
-      return this.audioStream;
-    } catch (error) {
-      this.hasPermission = false;
-      throw error;
-    }
-  }
-
-  async start() {
-    if (this.isRecording) {
-      return;
-    }
-
-    try {
-      const stream = await this.initializeStream();
-
-      // 1. 创建 AudioContext
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-      // 2. 创建 MediaStreamSource
-      this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream);
-
-      // 3. 创建 ScriptProcessorNode 用于处理音频数据
-      const bufferSize = 4096; // 处理块的大小
-      this.scriptProcessor = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
-
-      // 4. 核心处理逻辑
-      this.scriptProcessor.onaudioprocess = (event) => {
-        if (!this.isRecording) return;
-
-        const inputData = event.inputBuffer.getChannelData(0);
-
-        // --- 核心步骤：重采样和格式转换 ---
-        const resampledData = this.resample(inputData, this.audioContext.sampleRate, this.targetSampleRate);
-        const pcmData = this.float32ToInt16(resampledData);
-
-        if (chatStore.isConnected) {
-          chatStore.sendMessage(pcmData.buffer);
-        } else {
-          console.warn('WebSocket未连接，无法发送音频数据');
-        }
-      };
-
-      // 5. 连接节点
-      this.mediaStreamSource.connect(this.scriptProcessor);
-      this.scriptProcessor.connect(this.audioContext.destination);
-
-      this.isRecording = true;
-
-    } catch (error) {
-      alert('无法获取麦克风权限，请检查浏览器设置并重试。');
-      console.error('麦克风权限请求失败:', error);
-    }
-  }
-
-  stop() {
-    if (!this.isRecording) {
-      return;
-    }
-
-    this.isRecording = false;
-
-    // 断开并清理 Web Audio API 节点
-    if (this.mediaStreamSource) {
-      this.mediaStreamSource.disconnect();
-      this.mediaStreamSource = null;
-    }
-    if (this.scriptProcessor) {
-      this.scriptProcessor.disconnect();
-      this.scriptProcessor.onaudioprocess = null;
-      this.scriptProcessor = null;
-    }
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-    }
-  }
-
-  destroy() {
-    this.stop();
-    if (this.audioStream) {
-      this.audioStream.getTracks().forEach(track => track.stop());
-      this.audioStream = null;
-    }
-    this.hasPermission = false;
-  }
-
-  // --- 新增辅助方法 ---
-
-  /**
-   * 重采样音频数据
-   */
-  resample(input, fromSampleRate, toSampleRate) {
-    if (fromSampleRate === toSampleRate) {
-      return input;
-    }
-    const ratio = fromSampleRate / toSampleRate;
-    const outputLength = Math.floor(input.length / ratio);
-    const output = new Float32Array(outputLength);
-    for (let i = 0; i < outputLength; i++) {
-      const nearestInputIndex = Math.floor(i * ratio);
-      output[i] = input[nearestInputIndex];
-    }
-    return output;
-  }
-
-  /**
-   * 将 32位浮点数 转换为 16位PCM整数
-   */
-  float32ToInt16(buffer) {
-    let l = buffer.length;
-    const buf = new Int16Array(l);
-    while (l--) {
-      buf[l] = Math.min(1, buffer[l]) * 0x7FFF;
-    }
-    return buf;
-  }
-}
-
-const microphoneStreamer = new MicrophoneStreamer()
+});
 
 const handleMicClick = async () => {
   // 首次点击录音时，初始化音频播放器（满足浏览器安全策略）
