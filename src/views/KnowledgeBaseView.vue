@@ -113,6 +113,8 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import { useCharacterStore } from '@/stores/character'
 import { api } from '@/services/api'
 import { UploadCloud, Trash2 } from 'lucide-vue-next'
+import { FileStatus, FileStatusText, FileStatusClass } from '@/constants/fileStatus'
+import { getErrorMessage } from '@/utils/apiHelper'
 
 const characterStore = useCharacterStore()
 
@@ -149,31 +151,13 @@ const getFileType = (fileName) => {
 // 获取状态徽章样式
 const getStatusBadgeClass = (status) => {
   const baseClass = 'status-badge'
-
-  switch (status) {
-    case 'INDEXING':
-      return `${baseClass} indexing-status`
-    case 'ACTIVE':
-      return `${baseClass} active-status`
-    case 'FAILED':
-      return `${baseClass} failed-status`
-    default:
-      return `${baseClass} unknown-status`
-  }
+  const statusClass = FileStatusClass[status] || 'unknown-status'
+  return `${baseClass} ${statusClass}`
 }
 
 // 获取状态显示文本
 const getStatusText = (status) => {
-  switch (status) {
-    case 'INDEXING':
-      return '索引中'
-    case 'ACTIVE':
-      return '已启用'
-    case 'FAILED':
-      return '失败'
-    default:
-      return '未知'
-  }
+  return FileStatusText[status] || status
 }
 
 // 触发文件选择
@@ -212,7 +196,8 @@ const handleFileUpload = async (file) => {
     console.log('文件上传成功')
     await fetchKnowledgeFiles()
   } catch (error) {
-    console.error('文件上传失败:', error)
+    const errorMsg = getErrorMessage(error)
+    console.error('文件上传失败:', errorMsg)
   }
 }
 
@@ -227,7 +212,8 @@ const deleteFile = async (fileId) => {
     console.log('文件删除成功')
     await fetchKnowledgeFiles()
   } catch (error) {
-    console.error('文件删除失败:', error)
+    const errorMsg = getErrorMessage(error)
+    console.error('文件删除失败:', errorMsg)
   }
 }
 
@@ -240,9 +226,10 @@ const fetchKnowledgeFiles = async () => {
 
   try {
     const files = await api.getCharacterKnowledge(selectedCharacterId.value)
-    knowledgeFiles.value = files
+    knowledgeFiles.value = files || []
   } catch (error) {
-    console.error('获取知识文件列表失败:', error)
+    const errorMsg = getErrorMessage(error)
+    console.error('获取知识文件列表失败:', errorMsg)
     knowledgeFiles.value = []
   }
 }
@@ -489,8 +476,16 @@ onMounted(async () => {
   font-weight: 500;
 }
 
+.uploading-status {
+  color: #3b82f6;
+}
+
 .indexing-status {
   color: #f59e0b;
+}
+
+.completed-status {
+  color: #22c55e;
 }
 
 .active-status {

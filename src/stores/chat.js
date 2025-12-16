@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { websocketService } from '@/services/websocket'
 import { useCharacterStore } from './character'
 import AudioStreamPlayer from '@/services/AudioStreamPlayer'
+import { MessageTypes } from '@/constants/messageTypes'
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
@@ -133,14 +134,38 @@ export const useChatStore = defineStore('chat', {
       // 处理文本消息
       const textData = typeof event.data === 'string' ? event.data : event.data.toString()
 
-      // 尝试解析为 JSON（用于用户语音回显）
+      // 尝试解析为 JSON（用于用户语音回显、错误消息、音频信息等）
       try {
         const jsonData = JSON.parse(textData)
 
-        if (jsonData.type === 'user-transcription') {
-          // 用户语音识别结果回显
+        // 用户语音识别结果回显
+        if (jsonData.type === MessageTypes.USER_TRANSCRIPTION) {
           console.log('收到用户语音识别:', jsonData.content)
           this.addUserMessage(jsonData.content, characterId)
+          return
+        }
+
+        // 处理结构化错误消息
+        if (jsonData.type === MessageTypes.ERROR) {
+          console.error('收到错误消息:', jsonData.content)
+          this.addErrorMessage(jsonData.content || '发生未知错误', characterId)
+          return
+        }
+
+        // 处理音频信息（如有需要）
+        if (jsonData.type === MessageTypes.AUDIO_INFO) {
+          console.log('收到音频信息:', jsonData)
+          // 可以在这里处理音频元数据
+          return
+        }
+
+        // 处理 AI 回复（如果后端发送 ai-reply 类型的 JSON）
+        if (jsonData.type === MessageTypes.AI_REPLY) {
+          console.log('收到 AI 回复:', jsonData.content)
+          // 如果是完整的 AI 回复消息
+          if (jsonData.content) {
+            this.addAiMessage(jsonData.content, characterId, null, true)
+          }
           return
         }
       } catch (e) {

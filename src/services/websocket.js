@@ -1,3 +1,5 @@
+import { MessageTypes } from '@/constants/messageTypes'
+
 const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080'
 
 class WebSocketService {
@@ -45,11 +47,13 @@ class WebSocketService {
         }
 
         this.socket.onmessage = (event) => {
-          // 拦截心跳 pong 消息
+          // 拦截心跳 pong 消息和结构化错误消息
           if (typeof event.data === 'string') {
             try {
               const message = JSON.parse(event.data)
-              if (message.type === 'pong') {
+
+              // 处理心跳响应
+              if (message.type === MessageTypes.PONG) {
                 // 收到 pong，清除超时计时器
                 if (this.pongTimeout) {
                   clearTimeout(this.pongTimeout)
@@ -57,6 +61,16 @@ class WebSocketService {
                 }
                 console.log('收到心跳响应 pong')
                 // 不传递给上层业务逻辑
+                return
+              }
+
+              // 处理结构化错误消息
+              if (message.type === MessageTypes.ERROR) {
+                console.error('WebSocket 错误消息:', message.content)
+                // 传递给上层处理错误
+                if (this.messageHandler) {
+                  this.messageHandler(event)
+                }
                 return
               }
             } catch (e) {
@@ -164,8 +178,8 @@ class WebSocketService {
     }
 
     try {
-      // 发送 ping 消息
-      const pingMessage = JSON.stringify({ type: 'ping' })
+      // 发送 ping 消息（使用常量）
+      const pingMessage = JSON.stringify({ type: MessageTypes.PING })
       this.socket.send(pingMessage)
       console.log('发送心跳 ping')
 
