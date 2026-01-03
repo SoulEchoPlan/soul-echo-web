@@ -15,9 +15,13 @@
       :class="message.type"
     >
       <div class="message-content">
-        {{ message.content }}
-        <!-- 为未完成的 AI 消息添加打字光标 -->
-        <span v-if="message.type === 'ai' && !message.isComplete" class="typing-cursor"></span>
+        <!-- AI 消息使用 Markdown 渲染，用户消息直接显示 -->
+        <template v-if="message.type === 'ai'">
+          <span v-html="renderMarkdown(message.content)"></span>
+          <!-- 为未完成的 AI 消息添加打字光标 -->
+          <span v-if="!message.isComplete" class="typing-cursor"></span>
+        </template>
+        <span v-else>{{ message.content }}</span>
       </div>
     </div>
 
@@ -40,6 +44,14 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useCharacterStore } from '@/stores/character'
+import MarkdownIt from 'markdown-it'
+
+// 初始化 Markdown 渲染器
+const md = new MarkdownIt({
+  html: false,        // 禁用 HTML 标签
+  linkify: true,      // 自动转换 URL 为链接
+  typographer: true   // 启用一些语言中立的替换和引号美化
+})
 
 const chatStore = useChatStore()
 const characterStore = useCharacterStore()
@@ -59,10 +71,19 @@ const showConnectionStatus = computed(() => {
   // 正在连接时显示提示
   if (isConnecting.value) return true
 
-  // 只有在已尝试连接、有选中角色、且当前未连接时才显示"断开"提示
-  // 这样可以避免初始加载时的误报（Race Condition）
-  return hasConnectionAttempted.value && activeCharacter.value && !isConnected.value
+  // 只有在已尝试连接、有选中角色、当前未连接且未在连接中时才显示"断开"提示
+  // 避免切换角色时的误报：确保连接状态稳定后再显示
+  return hasConnectionAttempted.value &&
+         activeCharacter.value &&
+         !isConnected.value &&
+         !isConnecting.value
 })
+
+// 渲染 Markdown 内容
+const renderMarkdown = (content) => {
+  if (!content) return ''
+  return md.render(content)
+}
 
 const connectionStatusText = computed(() => {
   if (isConnecting.value) {
@@ -230,11 +251,17 @@ const handleReconnect = async () => {
 .typing-cursor {
   display: inline-block;
   width: 2px;
-  height: 1em;
+  height: 1.2em;
   background-color: currentColor;
   margin-left: 2px;
   animation: blink 1s infinite;
   vertical-align: text-bottom;
+  line-height: 1;
+}
+
+/* 确保 Markdown 渲染的内容与光标在同一行 */
+.message.ai .message-content > span:first-child {
+  display: inline;
 }
 
 @keyframes blink {
@@ -244,5 +271,67 @@ const handleReconnect = async () => {
   50%, 100% {
     opacity: 0;
   }
+}
+
+/* Markdown 渲染样式 */
+.message.ai .message-content :deep(p) {
+  margin: 0.5em 0;
+}
+
+.message.ai .message-content :deep(p:first-child) {
+  margin-top: 0;
+}
+
+.message.ai .message-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.message.ai .message-content :deep(code) {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9em;
+}
+
+.message.ai .message-content :deep(pre) {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+.message.ai .message-content :deep(pre code) {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.9em;
+}
+
+.message.ai .message-content :deep(ul),
+.message.ai .message-content :deep(ol) {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.message.ai .message-content :deep(li) {
+  margin: 0.25em 0;
+}
+
+.message.ai .message-content :deep(strong) {
+  font-weight: 600;
+}
+
+.message.ai .message-content :deep(em) {
+  font-style: italic;
+}
+
+.message.ai .message-content :deep(a) {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.message.ai .message-content :deep(a:hover) {
+  color: var(--accent-hover);
 }
 </style>

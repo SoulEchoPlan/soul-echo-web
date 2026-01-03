@@ -274,6 +274,9 @@ onMounted(async () => {
 .kb-content {
   max-width: 1280px;
   margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 页面标题区域 */
@@ -388,6 +391,10 @@ onMounted(async () => {
 /* 文件列表区域 */
 .file-list-section {
   margin-top: 2rem;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-title {
@@ -402,12 +409,37 @@ onMounted(async () => {
   border-radius: 0.75rem;
   overflow: hidden;
   border: 1px solid var(--border-color);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 400px);
 }
 
 .file-table {
   width: 100%;
   text-align: left;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.file-table th:nth-child(1),
+.file-table td:nth-child(1) {
+  width: 40%;
+}
+
+.file-table th:nth-child(2),
+.file-table td:nth-child(2) {
+  width: 15%;
+}
+
+.file-table th:nth-child(3),
+.file-table td:nth-child(3) {
+  width: 25%;
+}
+
+.file-table th:nth-child(4),
+.file-table td:nth-child(4) {
+  width: 20%;
 }
 
 .table-header {

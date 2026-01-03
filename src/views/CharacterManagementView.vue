@@ -269,29 +269,34 @@ const showNotification = (message, type = 'success') => {
   notification.textContent = message
   notification.style.cssText = `
     position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 8px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    padding: 16px 24px;
+    border-radius: 12px;
     color: white;
     font-weight: 500;
     z-index: 9999;
-    transform: translateX(120%);
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
+    opacity: 0;
     background-color: ${type === 'success' ? '#10b981' : '#ef4444'};
-    box-shadow: var(--shadow);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    min-width: 200px;
   `
 
   document.body.appendChild(notification)
 
   // 触发动画
   setTimeout(() => {
-    notification.style.transform = 'translateX(0)'
+    notification.style.opacity = '1'
+    notification.style.transform = 'translate(-50%, -50%) scale(1)'
   }, 10)
 
   // 3秒后移除
   setTimeout(() => {
-    notification.style.transform = 'translateX(120%)'
+    notification.style.opacity = '0'
+    notification.style.transform = 'translate(-50%, -50%) scale(0.9)'
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification)
@@ -551,14 +556,36 @@ onMounted(async () => {
   height: 1rem;
 }
 
-.edit-btn:hover {
-  background-color: rgba(59, 130, 246, 0.1);
+/* 编辑按钮：默认蓝色 */
+.edit-btn {
   color: #3b82f6;
+  opacity: 0.7;
+}
+
+.edit-btn:hover {
+  opacity: 1;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.edit-btn:active {
+  opacity: 1;
+  filter: brightness(1.2);
+}
+
+/* 删除按钮：默认红色 */
+.delete-btn {
+  color: #ef4444;
+  opacity: 0.7;
 }
 
 .delete-btn:hover {
+  opacity: 1;
   background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+}
+
+.delete-btn:active {
+  opacity: 1;
+  filter: brightness(1.2);
 }
 
 /* 模态框样式 */
