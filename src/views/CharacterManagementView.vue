@@ -269,9 +269,9 @@ const showNotification = (message, type = 'success') => {
   notification.textContent = message
   notification.style.cssText = `
     position: fixed;
-    top: 50%;
+    top: 12%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: translateX(-50%) scale(0.9);
     padding: 16px 24px;
     border-radius: 12px;
     color: white;
@@ -290,13 +290,13 @@ const showNotification = (message, type = 'success') => {
   // 触发动画
   setTimeout(() => {
     notification.style.opacity = '1'
-    notification.style.transform = 'translate(-50%, -50%) scale(1)'
+    notification.style.transform = 'translateX(-50%) scale(1)'
   }, 10)
 
   // 3秒后移除
   setTimeout(() => {
     notification.style.opacity = '0'
-    notification.style.transform = 'translate(-50%, -50%) scale(0.9)'
+    notification.style.transform = 'translateX(-50%) scale(0.9)'
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification)
@@ -316,11 +316,8 @@ onMounted(async () => {
   width: 100%;
   max-width: 100%;
   padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  height: 100%;
-  overflow-y: auto;
+  /* 移除 display、flex-direction、gap、height 和 overflow-y 设置，让内容自然撑开 */
+  /* 全局滚动由父容器 .main-content > *:last-child 的 overflow-y: auto 控制 */
 }
 
 /* 顶部栏样式 */
@@ -472,8 +469,7 @@ onMounted(async () => {
   border-radius: 12px;
   border: 1px solid var(--border-color);
   overflow: hidden;
-  flex: 1;
-  min-height: 0;
+  /* 移除 flex 和 overflow，让表格自然撑开，启用全局滚动 */
 }
 
 .character-table {

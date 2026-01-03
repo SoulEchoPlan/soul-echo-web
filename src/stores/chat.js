@@ -86,6 +86,21 @@ export const useChatStore = defineStore('chat', {
       if (!this.conversations[characterId]) {
         this.conversations[characterId] = []
       }
+
+      // 安全兜底机制：在添加新消息前，检查并关闭上一条未完成的 AI 消息
+      const messages = this.conversations[characterId]
+      if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1]
+        // 如果最后一条是未完成的 AI 消息，强制标记为完成
+        if (lastMessage.type === 'ai' && !lastMessage.isComplete) {
+          messages[messages.length - 1] = {
+            ...lastMessage,
+            isComplete: true
+          }
+          console.log('自动关闭上一条未完成的 AI 消息（安全兜底）')
+        }
+      }
+
       // 确保消息对象包含 isComplete 属性（默认为 true）
       const messageWithComplete = {
         ...message,
@@ -178,18 +193,53 @@ export const useChatStore = defineStore('chat', {
 
       // 处理流式文本
       const textChunk = textData
+      const streamEndSignal = '[STREAM_END]'
 
-      // 检查是否是流结束信号
-      if (textChunk === '[STREAM_END]') {
-        console.log('收到流结束信号')
+      // 检查是否包含流结束信号（支持粘包情况）
+      if (textChunk.includes(streamEndSignal)) {
+        console.log('检测到流结束信号，原文内容:', textChunk)
+
+        // 分离内容和信号（处理可能出现的多个信号）
+        const parts = textChunk.split(streamEndSignal)
+        const realContent = parts[0] // 信号前的实际内容
+
+        // 如果有剩余文本，先追加到当前消息
+        if (realContent && realContent.trim()) {
+          const messages = this.conversations[characterId] || []
+          const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null
+
+          if (lastMessage && lastMessage.type === 'ai' && !lastMessage.isComplete) {
+            messages[messages.length - 1] = {
+              ...lastMessage,
+              content: lastMessage.content + realContent
+            }
+            console.log('追加文本块（流结束前）:', realContent)
+          }
+        }
+
+        // 强制标记最后一条未完成的 AI 消息为完成状态（关键修复）
         const messages = this.conversations[characterId]
         if (messages && messages.length > 0) {
           const lastMessage = messages[messages.length - 1]
+
+          // 只要是 AI 消息且未完成，强制标记完成（移除光标）
           if (lastMessage.type === 'ai' && !lastMessage.isComplete) {
-            lastMessage.isComplete = true
-            console.log('AI消息流完成')
+            messages[messages.length - 1] = {
+              ...lastMessage,
+              isComplete: true
+            }
+            console.log('✅ AI消息流完成，已移除光标')
+          } else {
+            console.log('⚠️ 最后一条消息状态异常:', {
+              type: lastMessage?.type,
+              isComplete: lastMessage?.isComplete,
+              hasMessages: messages.length > 0
+            })
           }
+        } else {
+          console.log('⚠️ 没有找到消息历史')
         }
+
         return
       }
 
@@ -198,8 +248,11 @@ export const useChatStore = defineStore('chat', {
       const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null
 
       if (lastMessage && lastMessage.type === 'ai' && !lastMessage.isComplete) {
-        // 追加到现有的未完成消息
-        lastMessage.content += textChunk
+        // 追加到现有的未完成消息（替换整个对象以触发 Vue 响应式更新）
+        messages[messages.length - 1] = {
+          ...lastMessage,
+          content: lastMessage.content + textChunk
+        }
         console.log('追加文本块:', textChunk)
       } else {
         // 创建新的未完成 AI 消息

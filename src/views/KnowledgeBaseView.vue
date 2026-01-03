@@ -274,9 +274,7 @@ onMounted(async () => {
 .kb-content {
   max-width: 1280px;
   margin: 0 auto;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  /* 移除 height、display 和 flex 设置，让内容自然撑开 */
 }
 
 /* 页面标题区域 */
@@ -391,10 +389,7 @@ onMounted(async () => {
 /* 文件列表区域 */
 .file-list-section {
   margin-top: 2rem;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  /* 移除 flex、min-height 和 display 设置，让内容自然撑开 */
 }
 
 .section-title {
@@ -409,10 +404,7 @@ onMounted(async () => {
   border-radius: 0.75rem;
   overflow: hidden;
   border: 1px solid var(--border-color);
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  max-height: calc(100vh - 400px);
+  /* 移除 flex、max-height 和 overflow-y，让表格自然撑开，启用全局滚动 */
 }
 
 .file-table {

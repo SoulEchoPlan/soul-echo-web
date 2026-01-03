@@ -18,8 +18,6 @@
         <!-- AI 消息使用 Markdown 渲染，用户消息直接显示 -->
         <template v-if="message.type === 'ai'">
           <span v-html="renderMarkdown(message.content)"></span>
-          <!-- 为未完成的 AI 消息添加打字光标 -->
-          <span v-if="!message.isComplete" class="typing-cursor"></span>
         </template>
         <span v-else>{{ message.content }}</span>
       </div>
@@ -79,10 +77,28 @@ const showConnectionStatus = computed(() => {
          !isConnecting.value
 })
 
-// 渲染 Markdown 内容
+// 检测内容是否包含块级 Markdown 语法
+const hasBlockMarkdown = (content) => {
+  const blockPatterns = [
+    /^#+\s/m,           // 标题
+    /^[\s]*[-*+]\s/m,   // 无序列表
+    /^\d+\.\s/m,        // 有序列表
+    /^```/m,            // 代码块
+    /^>\s/m,            // 引用
+    /^[-*_]{3,}/m       // 分隔线
+  ]
+  return blockPatterns.some(pattern => pattern.test(content))
+}
+
+// 渲染 Markdown 内容（根据内容智能选择渲染方式）
 const renderMarkdown = (content) => {
   if (!content) return ''
-  return md.render(content)
+  // 根据是否包含块级语法选择渲染方式
+  // - 包含块级语法：使用 md.render() 支持复杂 Markdown
+  // - 不包含块级语法：使用 md.renderInline() 保持光标位置正确
+  return hasBlockMarkdown(content)
+    ? md.render(content)
+    : md.renderInline(content)
 }
 
 const connectionStatusText = computed(() => {
@@ -245,32 +261,6 @@ const handleReconnect = async () => {
 
 .chat-history::-webkit-scrollbar-thumb:hover {
   background-color: var(--text-muted);
-}
-
-/* 打字光标动画 */
-.typing-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1.2em;
-  background-color: currentColor;
-  margin-left: 2px;
-  animation: blink 1s infinite;
-  vertical-align: text-bottom;
-  line-height: 1;
-}
-
-/* 确保 Markdown 渲染的内容与光标在同一行 */
-.message.ai .message-content > span:first-child {
-  display: inline;
-}
-
-@keyframes blink {
-  0%, 49% {
-    opacity: 1;
-  }
-  50%, 100% {
-    opacity: 0;
-  }
 }
 
 /* Markdown 渲染样式 */
