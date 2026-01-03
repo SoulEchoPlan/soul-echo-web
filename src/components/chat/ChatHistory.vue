@@ -23,7 +23,15 @@
 
     <!-- 连接状态提示 -->
     <div v-if="showConnectionStatus" class="connection-status">
-      {{ connectionStatusText }}
+      <span>{{ connectionStatusText }}</span>
+      <!-- 重连按钮（仅在真正断开连接时显示） -->
+      <button
+        v-if="!isConnecting && hasConnectionAttempted && activeCharacter && !isConnected"
+        @click="handleReconnect"
+        class="reconnect-btn"
+      >
+        重连
+      </button>
     </div>
   </div>
 </template>
@@ -41,13 +49,19 @@ const messages = computed(() => chatStore.activeConversationMessages)
 const activeCharacter = computed(() => characterStore.activeCharacter)
 const isConnected = computed(() => chatStore.isConnected)
 const isConnecting = computed(() => chatStore.isConnecting)
+const hasConnectionAttempted = computed(() => chatStore.hasConnectionAttempted)
 
 const showGreeting = computed(() => {
   return activeCharacter.value && messages.value.length === 0
 })
 
 const showConnectionStatus = computed(() => {
-  return isConnecting.value || (!isConnected.value && activeCharacter.value)
+  // 正在连接时显示提示
+  if (isConnecting.value) return true
+
+  // 只有在已尝试连接、有选中角色、且当前未连接时才显示"断开"提示
+  // 这样可以避免初始加载时的误报（Race Condition）
+  return hasConnectionAttempted.value && activeCharacter.value && !isConnected.value
 })
 
 const connectionStatusText = computed(() => {
@@ -86,6 +100,17 @@ watch(activeCharacter, () => {
 watch([isConnecting, isConnected], () => {
   scrollToBottom()
 })
+
+// 重连处理函数
+const handleReconnect = async () => {
+  if (activeCharacter.value) {
+    try {
+      await chatStore.connect(activeCharacter.value)
+    } catch (error) {
+      console.error('重连失败:', error)
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -156,6 +181,31 @@ watch([isConnecting, isConnected], () => {
   text-align: center;
   color: var(--text-muted);
   font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.reconnect-btn {
+  padding: 0.4rem 1rem;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-style: normal;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.reconnect-btn:hover {
+  background-color: var(--accent-color-hover, #45a0f5);
+  transform: scale(1.05);
+}
+
+.reconnect-btn:active {
+  transform: scale(0.98);
 }
 
 /* 自定义滚动条 */

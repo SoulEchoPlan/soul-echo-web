@@ -58,9 +58,19 @@ const handleSelect = async (characterId) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   // 初始化时加载角色数据
-  characterStore.fetchCharacters()
+  await characterStore.fetchCharacters()
+
+  // 如果存在默认角色，自动建立 WebSocket 连接
+  if (characterStore.activeCharacter) {
+    try {
+      await chatStore.connect(characterStore.activeCharacter)
+    } catch (error) {
+      console.error('初始化WebSocket连接失败:', error)
+      chatStore.addErrorMessage('连接失败，请刷新页面重试', characterStore.activeCharacterId)
+    }
+  }
 })
 </script>
 

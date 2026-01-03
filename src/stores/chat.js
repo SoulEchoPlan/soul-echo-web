@@ -9,6 +9,7 @@ export const useChatStore = defineStore('chat', {
     conversations: {}, // 按角色ID存储对话历史
     isConnected: false,
     isConnecting: false,
+    hasConnectionAttempted: false, // 标记是否尝试过连接（用于判断是否显示断开提示）
     audioPlayer: new AudioStreamPlayer()
   }),
 
@@ -22,6 +23,9 @@ export const useChatStore = defineStore('chat', {
 
   actions: {
     async connect(character) {
+      // 标记已尝试连接，避免初始加载时的误报
+      this.hasConnectionAttempted = true
+
       if (!character) {
         console.error('无效的角色数据')
         return
