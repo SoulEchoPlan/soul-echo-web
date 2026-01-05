@@ -488,6 +488,12 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
+/* 操作列表头右对齐，对齐到按钮中间 */
+.character-table th:last-child {
+  text-align: right;
+  padding-right: 2.5rem;  /* 对齐到两个按钮中间位置 */
+}
+
 .character-row {
   border-bottom: 1px solid var(--border-color);
   transition: background-color 0.2s ease;
@@ -505,6 +511,11 @@ onMounted(async () => {
   padding: 1rem;
   color: var(--text-color);
   vertical-align: top;
+}
+
+/* 操作列单元格右对齐 */
+.character-table td:last-child {
+  text-align: right;
 }
 
 .character-name {
@@ -529,27 +540,27 @@ onMounted(async () => {
 
 .character-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
   white-space: nowrap;
-  width: 80px; /* 固定宽度保证对齐 */
+  /* 移除固定 width，让内容自适应 */
 }
 
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  padding: 0.5rem;      /* 改用 padding 而非固定 width/height */
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;  /* 改用 rem */
   cursor: pointer;
   transition: all 0.2s ease;
   background-color: transparent;
 }
 
 .action-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;  /* 20px - 与知识库管理一致 */
+  height: 1.25rem;
 }
 
 /* 编辑按钮：默认蓝色 */
@@ -801,12 +812,12 @@ onMounted(async () => {
   }
 
   .character-actions {
-    width: 60px;
+    justify-content: flex-end;
+    /* 移除固定 width */
   }
 
   .action-btn {
-    width: 1.75rem;
-    height: 1.75rem;
+    padding: 0.375rem;  /* 改用 padding */
   }
 }
 
@@ -822,18 +833,18 @@ onMounted(async () => {
 
   .character-actions {
     flex-direction: column;
+    align-items: flex-end;
     gap: 0.25rem;
-    width: 50px;
+    /* 移除固定 width */
   }
 
   .action-btn {
-    width: 1.5rem;
-    height: 1.5rem;
+    padding: 0.25rem;  /* 改用 padding */
   }
 
   .action-icon {
-    width: 0.875rem;
-    height: 0.875rem;
+    width: 1.125rem;   /* 稍小一点但仍保持较大尺寸 */
+    height: 1.125rem;
   }
 
   .description-text {

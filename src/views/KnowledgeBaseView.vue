@@ -505,7 +505,7 @@ onMounted(async () => {
 }
 
 .indexing-status {
-  color: #f59e0b;
+  color: #22c55e;
 }
 
 .completed-status {
