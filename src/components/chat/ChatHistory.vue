@@ -195,9 +195,11 @@ const handleReconnect = async () => {
   padding: 1rem;
   border-radius: 8px;
   margin-top: 1rem;
-  line-height: 1.5;
+  line-height: 1.8; /* 黄金阅读行高 */
   width: fit-content;
   max-width: 80%;
+  font-size: 1rem; /* 默认字号 */
+  text-align: justify; /* 两端对齐，增加整洁度 */
 }
 
 .message.error .message-content {
@@ -263,9 +265,11 @@ const handleReconnect = async () => {
   background-color: var(--text-muted);
 }
 
-/* Markdown 渲染样式 */
+/* Markdown 渲染样式 - 精排版电子书风格 */
+
+/* 段落优化 - 增加呼吸感 */
 .message.ai .message-content :deep(p) {
-  margin: 0.5em 0;
+  margin-bottom: 1em; /* 增加段落间距，营造阅读小说的沉浸感 */
 }
 
 .message.ai .message-content :deep(p:first-child) {
@@ -274,6 +278,21 @@ const handleReconnect = async () => {
 
 .message.ai .message-content :deep(p:last-child) {
   margin-bottom: 0;
+}
+
+/* 强制修复粗体 - 确保清晰可见，颜色自动适配主题 */
+.message.ai .message-content :deep(strong),
+.message.ai .message-content :deep(b) {
+  font-weight: 700 !important; /* 只保留加粗，颜色继承父元素自动适配主题 */
+}
+
+/* 优化斜体/动作描写 - 保留倾斜并增强视觉区分 */
+.message.ai .message-content :deep(em),
+.message.ai .message-content :deep(i) {
+  font-style: italic; /* 恢复倾斜样式 */
+  color: #6b7280; /* 使用灰色表示动作/旁白，与对话内容区分 */
+  font-family: "KaiTi", "STKaiti", "楷体", serif; /* 使用楷体/衬线体营造小说旁白感 */
+  padding: 0 4px; /* 增加微小间距，视觉上更舒适 */
 }
 
 .message.ai .message-content :deep(code) {
@@ -298,22 +317,32 @@ const handleReconnect = async () => {
   font-size: 0.9em;
 }
 
+/* 列表优化 - 增加缩进和间距 */
 .message.ai .message-content :deep(ul),
 .message.ai .message-content :deep(ol) {
-  margin: 0.5em 0;
-  padding-left: 1.5em;
+  margin: 0.75em 0; /* 增加上下边距 */
+  padding-left: 1.5em; /* 保持左侧缩进 */
 }
 
 .message.ai .message-content :deep(li) {
-  margin: 0.25em 0;
+  margin-bottom: 0.5em; /* 增加列表项间距 */
 }
 
-.message.ai .message-content :deep(strong) {
-  font-weight: 600;
+.message.ai .message-content :deep(li:last-child) {
+  margin-bottom: 0;
 }
 
-.message.ai .message-content :deep(em) {
-  font-style: italic;
+/* 引用块优化 - 增加视觉区分 */
+.message.ai .message-content :deep(blockquote) {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid var(--accent-color, #4a90e2); /* 左侧彩色边框 */
+  background-color: rgba(0, 0, 0, 0.03); /* 轻微变灰的背景 */
+  color: #6b7280; /* 引用内容使用灰色 */
+}
+
+.message.ai .message-content :deep(blockquote p) {
+  margin-bottom: 0; /* 引用内的段落不需要额外间距 */
 }
 
 .message.ai .message-content :deep(a) {
