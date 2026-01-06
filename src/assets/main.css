@@ -95,7 +95,7 @@ button, input, textarea {
 */
 .main-content > *:last-child {
     flex: 1;
-    overflow: hidden; /* 确保视图内部可以滚动 */
+    overflow-y: auto; /* 允许视图内部垂直滚动 */
 }
 
 /* --- 4. (新增) 移植 example.html 的全局样式 --- */

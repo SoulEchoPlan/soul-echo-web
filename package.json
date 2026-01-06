@@ -13,6 +13,7 @@
   "dependencies": {
     "feather-icons": "^4.29.0",
     "lucide-vue-next": "^0.553.0",
+    "markdown-it": "^14.1.0",
     "pinia": "^2.1.7",
     "vue": "^3.4.0",
     "vue-router": "^4.6.3"

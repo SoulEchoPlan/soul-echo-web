@@ -2,12 +2,14 @@ import { defineStore } from 'pinia'
 import { websocketService } from '@/services/websocket'
 import { useCharacterStore } from './character'
 import AudioStreamPlayer from '@/services/AudioStreamPlayer'
+import { MessageTypes } from '@/constants/messageTypes'
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
     conversations: {}, // 按角色ID存储对话历史
     isConnected: false,
     isConnecting: false,
+    hasConnectionAttempted: false, // 标记是否尝试过连接（用于判断是否显示断开提示）
     audioPlayer: new AudioStreamPlayer()
   }),
 
@@ -21,6 +23,9 @@ export const useChatStore = defineStore('chat', {
 
   actions: {
     async connect(character) {
+      // 标记已尝试连接，避免初始加载时的误报
+      this.hasConnectionAttempted = true
+
       if (!character) {
         console.error('无效的角色数据')
         return
@@ -81,6 +86,21 @@ export const useChatStore = defineStore('chat', {
       if (!this.conversations[characterId]) {
         this.conversations[characterId] = []
       }
+
+      // 安全兜底机制：在添加新消息前，检查并关闭上一条未完成的 AI 消息
+      const messages = this.conversations[characterId]
+      if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1]
+        // 如果最后一条是未完成的 AI 消息，强制标记为完成
+        if (lastMessage.type === 'ai' && !lastMessage.isComplete) {
+          messages[messages.length - 1] = {
+            ...lastMessage,
+            isComplete: true
+          }
+          console.log('自动关闭上一条未完成的 AI 消息（安全兜底）')
+        }
+      }
+
       // 确保消息对象包含 isComplete 属性（默认为 true）
       const messageWithComplete = {
         ...message,
@@ -133,14 +153,38 @@ export const useChatStore = defineStore('chat', {
       // 处理文本消息
       const textData = typeof event.data === 'string' ? event.data : event.data.toString()
 
-      // 尝试解析为 JSON（用于用户语音回显）
+      // 尝试解析为 JSON（用于用户语音回显、错误消息、音频信息等）
       try {
         const jsonData = JSON.parse(textData)
 
-        if (jsonData.type === 'user-transcription') {
-          // 用户语音识别结果回显
+        // 用户语音识别结果回显
+        if (jsonData.type === MessageTypes.USER_TRANSCRIPTION) {
           console.log('收到用户语音识别:', jsonData.content)
           this.addUserMessage(jsonData.content, characterId)
+          return
+        }
+
+        // 处理结构化错误消息
+        if (jsonData.type === MessageTypes.ERROR) {
+          console.error('收到错误消息:', jsonData.content)
+          this.addErrorMessage(jsonData.content || '发生未知错误', characterId)
+          return
+        }
+
+        // 处理音频信息（如有需要）
+        if (jsonData.type === MessageTypes.AUDIO_INFO) {
+          console.log('收到音频信息:', jsonData)
+          // 可以在这里处理音频元数据
+          return
+        }
+
+        // 处理 AI 回复（如果后端发送 ai-reply 类型的 JSON）
+        if (jsonData.type === MessageTypes.AI_REPLY) {
+          console.log('收到 AI 回复:', jsonData.content)
+          // 如果是完整的 AI 回复消息
+          if (jsonData.content) {
+            this.addAiMessage(jsonData.content, characterId, null, true)
+          }
           return
         }
       } catch (e) {
@@ -149,18 +193,53 @@ export const useChatStore = defineStore('chat', {
 
       // 处理流式文本
       const textChunk = textData
+      const streamEndSignal = '[STREAM_END]'
 
-      // 检查是否是流结束信号
-      if (textChunk === '[STREAM_END]') {
-        console.log('收到流结束信号')
+      // 检查是否包含流结束信号（支持粘包情况）
+      if (textChunk.includes(streamEndSignal)) {
+        console.log('检测到流结束信号，原文内容:', textChunk)
+
+        // 分离内容和信号（处理可能出现的多个信号）
+        const parts = textChunk.split(streamEndSignal)
+        const realContent = parts[0] // 信号前的实际内容
+
+        // 如果有剩余文本，先追加到当前消息
+        if (realContent && realContent.trim()) {
+          const messages = this.conversations[characterId] || []
+          const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null
+
+          if (lastMessage && lastMessage.type === 'ai' && !lastMessage.isComplete) {
+            messages[messages.length - 1] = {
+              ...lastMessage,
+              content: lastMessage.content + realContent
+            }
+            console.log('追加文本块（流结束前）:', realContent)
+          }
+        }
+
+        // 强制标记最后一条未完成的 AI 消息为完成状态（关键修复）
         const messages = this.conversations[characterId]
         if (messages && messages.length > 0) {
           const lastMessage = messages[messages.length - 1]
+
+          // 只要是 AI 消息且未完成，强制标记完成（移除光标）
           if (lastMessage.type === 'ai' && !lastMessage.isComplete) {
-            lastMessage.isComplete = true
-            console.log('AI消息流完成')
+            messages[messages.length - 1] = {
+              ...lastMessage,
+              isComplete: true
+            }
+            console.log('✅ AI消息流完成，已移除光标')
+          } else {
+            console.log('⚠️ 最后一条消息状态异常:', {
+              type: lastMessage?.type,
+              isComplete: lastMessage?.isComplete,
+              hasMessages: messages.length > 0
+            })
           }
+        } else {
+          console.log('⚠️ 没有找到消息历史')
         }
+
         return
       }
 
@@ -169,8 +248,11 @@ export const useChatStore = defineStore('chat', {
       const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null
 
       if (lastMessage && lastMessage.type === 'ai' && !lastMessage.isComplete) {
-        // 追加到现有的未完成消息
-        lastMessage.content += textChunk
+        // 追加到现有的未完成消息（替换整个对象以触发 Vue 响应式更新）
+        messages[messages.length - 1] = {
+          ...lastMessage,
+          content: lastMessage.content + textChunk
+        }
         console.log('追加文本块:', textChunk)
       } else {
         // 创建新的未完成 AI 消息

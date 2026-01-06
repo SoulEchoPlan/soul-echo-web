@@ -269,29 +269,34 @@ const showNotification = (message, type = 'success') => {
   notification.textContent = message
   notification.style.cssText = `
     position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 8px;
+    top: 12%;
+    left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    padding: 16px 24px;
+    border-radius: 12px;
     color: white;
     font-weight: 500;
     z-index: 9999;
-    transform: translateX(120%);
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
+    opacity: 0;
     background-color: ${type === 'success' ? '#10b981' : '#ef4444'};
-    box-shadow: var(--shadow);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    min-width: 200px;
   `
 
   document.body.appendChild(notification)
 
   // 触发动画
   setTimeout(() => {
-    notification.style.transform = 'translateX(0)'
+    notification.style.opacity = '1'
+    notification.style.transform = 'translateX(-50%) scale(1)'
   }, 10)
 
   // 3秒后移除
   setTimeout(() => {
-    notification.style.transform = 'translateX(120%)'
+    notification.style.opacity = '0'
+    notification.style.transform = 'translateX(-50%) scale(0.9)'
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification)
@@ -311,11 +316,8 @@ onMounted(async () => {
   width: 100%;
   max-width: 100%;
   padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  height: 100%;
-  overflow-y: auto;
+  /* 移除 display、flex-direction、gap、height 和 overflow-y 设置，让内容自然撑开 */
+  /* 全局滚动由父容器 .main-content > *:last-child 的 overflow-y: auto 控制 */
 }
 
 /* 顶部栏样式 */
@@ -467,8 +469,7 @@ onMounted(async () => {
   border-radius: 12px;
   border: 1px solid var(--border-color);
   overflow: hidden;
-  flex: 1;
-  min-height: 0;
+  /* 移除 flex 和 overflow，让表格自然撑开，启用全局滚动 */
 }
 
 .character-table {
@@ -485,6 +486,12 @@ onMounted(async () => {
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
+}
+
+/* 操作列表头右对齐，对齐到按钮中间 */
+.character-table th:last-child {
+  text-align: right;
+  padding-right: 2.5rem;  /* 对齐到两个按钮中间位置 */
 }
 
 .character-row {
@@ -504,6 +511,11 @@ onMounted(async () => {
   padding: 1rem;
   color: var(--text-color);
   vertical-align: top;
+}
+
+/* 操作列单元格右对齐 */
+.character-table td:last-child {
+  text-align: right;
 }
 
 .character-name {
@@ -528,37 +540,59 @@ onMounted(async () => {
 
 .character-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
   white-space: nowrap;
-  width: 80px; /* 固定宽度保证对齐 */
+  /* 移除固定 width，让内容自适应 */
 }
 
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  padding: 0.5rem;      /* 改用 padding 而非固定 width/height */
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;  /* 改用 rem */
   cursor: pointer;
   transition: all 0.2s ease;
   background-color: transparent;
 }
 
 .action-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;  /* 20px - 与知识库管理一致 */
+  height: 1.25rem;
+}
+
+/* 编辑按钮：默认蓝色 */
+.edit-btn {
+  color: #3b82f6;
+  opacity: 0.7;
 }
 
 .edit-btn:hover {
+  opacity: 1;
   background-color: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+}
+
+.edit-btn:active {
+  opacity: 1;
+  filter: brightness(1.2);
+}
+
+/* 删除按钮：默认红色 */
+.delete-btn {
+  color: #ef4444;
+  opacity: 0.7;
 }
 
 .delete-btn:hover {
+  opacity: 1;
   background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+}
+
+.delete-btn:active {
+  opacity: 1;
+  filter: brightness(1.2);
 }
 
 /* 模态框样式 */
@@ -778,12 +812,12 @@ onMounted(async () => {
   }
 
   .character-actions {
-    width: 60px;
+    justify-content: flex-end;
+    /* 移除固定 width */
   }
 
   .action-btn {
-    width: 1.75rem;
-    height: 1.75rem;
+    padding: 0.375rem;  /* 改用 padding */
   }
 }
 
@@ -799,18 +833,18 @@ onMounted(async () => {
 
   .character-actions {
     flex-direction: column;
+    align-items: flex-end;
     gap: 0.25rem;
-    width: 50px;
+    /* 移除固定 width */
   }
 
   .action-btn {
-    width: 1.5rem;
-    height: 1.5rem;
+    padding: 0.25rem;  /* 改用 padding */
   }
 
   .action-icon {
-    width: 0.875rem;
-    height: 0.875rem;
+    width: 1.125rem;   /* 稍小一点但仍保持较大尺寸 */
+    height: 1.125rem;
   }
 
   .description-text {
