@@ -67,14 +67,21 @@ export const useChatStore = defineStore('chat', {
       this.isConnected = false
     },
 
-    sendMessage(message) {
+    sendMessage(message, options = {}) {
       if (!this.isConnected) {
         console.warn('WebSocket未连接，无法发送消息')
         return false
       }
 
       try {
-        websocketService.send(message)
+        // 构建消息 payload，支持 TTS 等配置参数
+        const payload = {
+          message: message,
+          ttsEnabled: options.ttsEnabled || false
+        }
+
+        // 发送序列化后的 JSON 字符串
+        websocketService.send(JSON.stringify(payload))
         return true
       } catch (error) {
         console.error('发送消息失败:', error)

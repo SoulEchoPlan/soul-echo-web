@@ -35,6 +35,14 @@ import {useCharacterStore} from '@/stores/character'
 import {ModernMicrophoneStreamer} from '@/utils/ModernMicrophoneStreamer'
 import feather from 'feather-icons'
 
+// 定义 props
+const props = defineProps({
+  ttsEnabled: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const chatStore = useChatStore()
 const characterStore = useCharacterStore()
 
@@ -48,11 +56,11 @@ const microphoneStreamer = new ModernMicrophoneStreamer()
 // 设置音频数据处理回调
 microphoneStreamer.onAudioData((pcmData) => {
   if (chatStore.isConnected) {
-    chatStore.sendMessage(pcmData);
+    chatStore.sendMessage(pcmData, { ttsEnabled: props.ttsEnabled })
   } else {
-    console.warn('WebSocket未连接，无法发送音频数据');
+    console.warn('WebSocket未连接，无法发送音频数据')
   }
-});
+})
 
 const handleMicClick = async () => {
   // 首次点击录音时，初始化音频播放器（满足浏览器安全策略）
@@ -105,8 +113,8 @@ const sendTextMessage = () => {
   messageText.value = ''
   adjustTextareaHeight()
 
-  // 发送消息
-  const success = chatStore.sendMessage(text)
+  // 发送消息，传递 TTS 配置
+  const success = chatStore.sendMessage(text, { ttsEnabled: props.ttsEnabled })
   if (!success) {
     chatStore.addErrorMessage('连接已断开，请刷新页面或重新选择角色', characterStore.activeCharacterId)
   }
