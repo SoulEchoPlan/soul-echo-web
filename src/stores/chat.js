@@ -89,6 +89,28 @@ export const useChatStore = defineStore('chat', {
       }
     },
 
+    /**
+     * 发送二进制音频数据
+     * @param {Blob|ArrayBuffer} data - 二进制音频数据
+     * @returns {boolean} 发送是否成功
+     */
+    sendAudioData(data) {
+      if (!this.isConnected) {
+        console.warn('WebSocket未连接，无法发送音频数据')
+        return false
+      }
+
+      try {
+        // 直接发送二进制数据，不要 JSON.stringify
+        websocketService.send(data)
+        console.log('音频数据已发送:', data instanceof Blob ? `${data.size} bytes (Blob)` : `${data.byteLength} bytes (ArrayBuffer)`)
+        return true
+      } catch (error) {
+        console.error('发送音频数据失败:', error)
+        return false
+      }
+    },
+
     addMessage(message, characterId) {
       if (!this.conversations[characterId]) {
         this.conversations[characterId] = []
@@ -173,8 +195,23 @@ export const useChatStore = defineStore('chat', {
 
         // 处理结构化错误消息
         if (jsonData.type === MessageTypes.ERROR) {
-          console.error('收到错误消息:', jsonData.content)
-          this.addErrorMessage(jsonData.content || '发生未知错误', characterId)
+          // 检查 TTS 熔断信号
+          if (jsonData.code === 'TTS_BROKEN') {
+            console.warn('检测到 TTS 熔断信号')
+            window.$toast('语音服务已到期，已切换至文字模式', 'error')
+            return
+          }
+
+          const errorContent = jsonData.content || '发生未知错误'
+
+          // 检测 TTS/语音服务错误
+          if (errorContent.includes('TTS') || errorContent.includes('语音')) {
+            console.warn('语音服务熔断，仅显示文本')
+          } else {
+            console.error('收到错误消息:', errorContent)
+          }
+
+          this.addErrorMessage(errorContent, characterId)
           return
         }
 

@@ -55,11 +55,7 @@ const microphoneStreamer = new ModernMicrophoneStreamer()
 
 // 设置音频数据处理回调
 microphoneStreamer.onAudioData((pcmData) => {
-  if (chatStore.isConnected) {
-    chatStore.sendMessage(pcmData, { ttsEnabled: props.ttsEnabled })
-  } else {
-    console.warn('WebSocket未连接，无法发送音频数据')
-  }
+  chatStore.sendAudioData(pcmData)
 })
 
 const handleMicClick = async () => {
