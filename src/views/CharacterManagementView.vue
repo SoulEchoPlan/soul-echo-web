@@ -143,11 +143,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCharacterStore } from '@/stores/character'
+import { useToastStore } from '@/stores/toast'
 
 // Store
 const characterStore = useCharacterStore()
+const toastStore = useToastStore()
 
 // 响应式数据
 const searchQuery = ref('')
@@ -227,17 +229,17 @@ const handleSubmit = async () => {
     if (isEditing.value && editingCharacter.value) {
       // 更新角色
       await characterStore.updateCharacter(editingCharacter.value.id, characterData)
-      showNotification('角色更新成功！')
+      toastStore.success('角色更新成功！')
     } else {
       // 创建角色
       await characterStore.addCharacter(characterData)
-      showNotification('角色创建成功！')
+      toastStore.success('角色创建成功！')
     }
 
     closeModal()
   } catch (error) {
     console.error('保存角色失败:', error)
-    showNotification('操作失败，请重试', 'error')
+    toastStore.error('操作失败，请重试')
   } finally {
     isSubmitting.value = false
   }
@@ -254,55 +256,11 @@ const confirmDelete = (character) => {
 const deleteCharacter = async (id) => {
   try {
     await characterStore.deleteCharacter(id)
-    showNotification('角色删除成功！')
+    toastStore.success('角色删除成功！')
   } catch (error) {
     console.error('删除角色失败:', error)
-    showNotification('删除失败，请重试', 'error')
+    toastStore.error('删除失败，请重试')
   }
-}
-
-// 显示通知
-const showNotification = (message, type = 'success') => {
-  // 简单的通知实现，可以后续优化为更好的通知组件
-  const notification = document.createElement('div')
-  notification.className = `notification notification-${type}`
-  notification.textContent = message
-  notification.style.cssText = `
-    position: fixed;
-    top: 12%;
-    left: 50%;
-    transform: translateX(-50%) scale(0.9);
-    padding: 16px 24px;
-    border-radius: 12px;
-    color: white;
-    font-weight: 500;
-    z-index: 9999;
-    transition: all 0.3s ease;
-    opacity: 0;
-    background-color: ${type === 'success' ? '#10b981' : '#ef4444'};
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    min-width: 200px;
-  `
-
-  document.body.appendChild(notification)
-
-  // 触发动画
-  setTimeout(() => {
-    notification.style.opacity = '1'
-    notification.style.transform = 'translateX(-50%) scale(1)'
-  }, 10)
-
-  // 3秒后移除
-  setTimeout(() => {
-    notification.style.opacity = '0'
-    notification.style.transform = 'translateX(-50%) scale(0.9)'
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification)
-      }
-    }, 300)
-  }, 3000)
 }
 
 // 组件挂载时获取角色数据
