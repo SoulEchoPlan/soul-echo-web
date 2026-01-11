@@ -172,9 +172,23 @@ export const useChatStore = defineStore('chat', {
 
     // 处理接收到的WebSocket消息
     handleIncomingMessage(event, characterId) {
+      // 调试日志：记录消息类型和数据大小
+      const dataType = typeof event.data
+      const dataSize = event.data instanceof ArrayBuffer
+        ? `${event.data.byteLength} bytes (ArrayBuffer)`
+        : event.data instanceof Blob
+          ? `${event.data.size} bytes (Blob)`
+          : `${event.data.length} chars (String)`
+
+      console.log('🔍 [WebSocket] 收到消息:', {
+        type: dataType,
+        size: dataSize,
+        characterId
+      })
+
       if (event.data instanceof ArrayBuffer) {
         // 处理二进制音频数据 - 使用流式播放器
-        console.log('收到音频数据块:', event.data.byteLength, 'bytes')
+        console.log('✅ [音频] 收到音频数据块:', event.data.byteLength, 'bytes')
         this.audioPlayer.receive(event.data)
         return
       }

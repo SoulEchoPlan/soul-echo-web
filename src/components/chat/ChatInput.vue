@@ -102,6 +102,14 @@ const sendTextMessage = () => {
     return
   }
 
+  // 初始化音频播放器（满足浏览器自动播放策略）
+  try {
+    chatStore.audioPlayer.initialize()
+    console.log('音频播放器已初始化（发送消息时）')
+  } catch (error) {
+    console.error('音频播放器初始化失败:', error)
+  }
+
   // 添加用户消息到聊天记录
   chatStore.addUserMessage(text, characterStore.activeCharacterId)
 
