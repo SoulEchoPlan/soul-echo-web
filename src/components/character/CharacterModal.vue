@@ -30,7 +30,7 @@
             <textarea
               id="personaPrompt"
               v-model="formData.personaPrompt"
-              rows="4"
+              rows="3"
               required
               placeholder="详细描述角色的性格、背景、说话风格等..."
               class="form-textarea"
@@ -225,7 +225,7 @@ const handleSubmit = async () => {
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .form-group:last-child {
@@ -234,7 +234,7 @@ const handleSubmit = async () => {
 
 .form-label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   font-weight: 500;
   font-size: 0.875rem;
   color: var(--text-color);
@@ -245,12 +245,13 @@ const handleSubmit = async () => {
   background-color: var(--secondary-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 0.75rem;
+  padding: 0.6rem 0.75rem;
   font-size: 0.875rem;
   color: var(--text-color);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   resize: vertical;
   font-family: inherit;
+  line-height: 1.4;
 }
 
 .form-input:focus, .form-textarea:focus {

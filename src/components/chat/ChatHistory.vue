@@ -163,12 +163,12 @@ const handleReconnect = async () => {
 
 .greeting-wrapper .char-greeting {
   background-color: var(--secondary-bg);
-  padding: 1.5rem;
-  border-radius: 10px;
-  line-height: 1.7;
-  font-size: 1.1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  line-height: 1.6;
+  font-size: 1rem;
   width: fit-content;
-  max-width: 80%;
+  max-width: 50%;
 }
 
 .message {

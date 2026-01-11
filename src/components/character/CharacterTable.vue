@@ -248,7 +248,7 @@ defineEmits(['search', 'edit', 'delete'])
 .character-table td {
   padding: 1rem;
   color: var(--text-color);
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 /* 操作列单元格右对齐 */
@@ -262,7 +262,8 @@ defineEmits(['search', 'edit', 'delete'])
 }
 
 .character-description {
-  max-width: 0;
+  max-width: 200px;
+  min-width: 120px;
 }
 
 .description-text {
