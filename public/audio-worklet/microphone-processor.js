@@ -5,15 +5,20 @@ class MicrophoneProcessor extends AudioWorkletProcessor {
     this.targetSampleRate = 16000; // 阿里云要求的采样率
     this.isRecording = false;
     this.currentSampleRate = 48000; // 默认采样率
+    this.audioDataCount = 0;
 
     // 监听主线程的消息
     this.port.onmessage = (event) => {
       if (event.data.type === 'UPDATE_RECORDING_STATE') {
         this.isRecording = event.data.isRecording;
+        console.log(`[Processor] 收到UPDATE_RECORDING_STATE: ${this.isRecording}`);
       } else if (event.data.type === 'UPDATE_SAMPLE_RATE') {
         this.currentSampleRate = event.data.sampleRate;
+        console.log(`[Processor] 收到UPDATE_SAMPLE_RATE: ${this.currentSampleRate}`);
       }
     };
+
+    console.log('[Processor] MicrophoneProcessor初始化完成');
   }
 
   process(inputs, outputs, parameters) {
@@ -34,6 +39,11 @@ class MicrophoneProcessor extends AudioWorkletProcessor {
     // 重采样和转换
     const resampledData = this.resample(inputData, this.currentSampleRate, this.targetSampleRate);
     const pcmData = this.float32ToInt16(resampledData);
+
+    this.audioDataCount++;
+    if (this.audioDataCount % 100 === 0) {
+      console.log(`[Processor] 发送音频数据包 #${this.audioDataCount}, 大小: ${pcmData.byteLength} bytes`);
+    }
 
     // 发送处理后的数据到主线程
     this.port.postMessage({

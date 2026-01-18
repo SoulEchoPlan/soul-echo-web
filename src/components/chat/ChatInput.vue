@@ -65,28 +65,39 @@ const inputPlaceholder = computed(() => {
 const microphoneStreamer = new ModernMicrophoneStreamer()
 
 // 设置音频数据处理回调
+let audioPacketCount = 0
 microphoneStreamer.onAudioData((pcmData) => {
+  audioPacketCount++
+  if (audioPacketCount % 100 === 0) {
+    console.log(`[ChatInput] 发送音频数据包 #${audioPacketCount}, 大小: ${pcmData.byteLength} bytes`)
+  }
   chatStore.sendAudioData(pcmData)
 })
 
 const handleMicClick = async () => {
+  console.log('[ChatInput] 麦克风按钮点击，当前录音状态:', isRecording.value)
+
   // 首次点击录音时，初始化音频播放器（满足浏览器安全策略）
   if (!isRecording.value) {
     try {
       chatStore.audioPlayer.initialize()
+      console.log('[ChatInput] 音频播放器初始化成功')
     } catch (error) {
-      console.error('音频播放器初始化失败:', error)
+      console.error('[ChatInput] 音频播放器初始化失败:', error)
     }
   }
 
   if (isRecording.value) {
+    console.log('[ChatInput] 停止录音')
     microphoneStreamer.stop()
   } else {
+    console.log('[ChatInput] 开始录音')
     await microphoneStreamer.start()
   }
 
   // 同步 UI 状态
   isRecording.value = microphoneStreamer.isRecording
+  console.log('[ChatInput] UI状态已同步，isRecording:', isRecording.value)
   updateMicButtonUI()
 }
 
