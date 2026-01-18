@@ -190,7 +190,7 @@ export const useChatStore = defineStore('chat', {
 
       if (event.data instanceof ArrayBuffer) {
         // 处理二进制音频数据 - 使用流式播放器
-        console.log('✅ [音频] 收到音频数据块:', event.data.byteLength, 'bytes')
+        console.log('[音频] 收到音频数据块:', event.data.byteLength, 'bytes')
         this.audioPlayer.receive(event.data)
         return
       }
@@ -288,16 +288,16 @@ export const useChatStore = defineStore('chat', {
               ...lastMessage,
               isComplete: true
             }
-            console.log('✅ AI消息流完成，已移除光标')
+            console.log('AI消息流完成，已移除光标')
           } else {
-            console.log('⚠️ 最后一条消息状态异常:', {
+            console.log('最后一条消息状态异常:', {
               type: lastMessage?.type,
               isComplete: lastMessage?.isComplete,
               hasMessages: messages.length > 0
             })
           }
         } else {
-          console.log('⚠️ 没有找到消息历史')
+          console.log('没有找到消息历史')
         }
 
         return

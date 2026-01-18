@@ -23,12 +23,11 @@
       </div>
     </div>
 
-    <!-- 连接状态提示 -->
+    <!-- 连接状态提示（仅在断开连接时显示） -->
     <div v-if="showConnectionStatus" class="connection-status">
       <span>{{ connectionStatusText }}</span>
-      <!-- 重连按钮（仅在真正断开连接时显示） -->
+      <!-- 重连按钮 -->
       <button
-        v-if="!isConnecting && hasConnectionAttempted && activeCharacter && !isConnected"
         @click="handleReconnect"
         class="reconnect-btn"
       >
@@ -66,11 +65,7 @@ const showGreeting = computed(() => {
 })
 
 const showConnectionStatus = computed(() => {
-  // 正在连接时显示提示
-  if (isConnecting.value) return true
-
-  // 只有在已尝试连接、有选中角色、当前未连接且未在连接中时才显示"断开"提示
-  // 避免切换角色时的误报：确保连接状态稳定后再显示
+  // 只在真正断开连接时显示提示（移除"正在连接"状态）
   return hasConnectionAttempted.value &&
          activeCharacter.value &&
          !isConnected.value &&
@@ -102,9 +97,8 @@ const renderMarkdown = (content) => {
 }
 
 const connectionStatusText = computed(() => {
-  if (isConnecting.value) {
-    return '正在连接...'
-  } else if (!isConnected.value && activeCharacter.value) {
+  // 只在断开连接时返回提示文本
+  if (!isConnected.value && activeCharacter.value && !isConnecting.value) {
     return '连接已断开，请重新选择角色'
   }
   return ''
