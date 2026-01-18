@@ -1,27 +1,30 @@
 <template>
-  <div class="user-input-area">
+  <div class="user-input-area" :class="{ disabled: !chatStore.isConnected }">
     <button
         class="action-btn mic-btn"
         :class="{ recording: isRecording }"
         @click="handleMicClick"
         :aria-label="isRecording ? '停止录音' : '录音'"
+        :disabled="!chatStore.isConnected"
     >
       <i :data-feather="isRecording ? 'stop-circle' : 'mic'"></i>
     </button>
     <label>
       <textarea
           class="input-field"
-          placeholder="输入或用语音命名..."
+          :placeholder="inputPlaceholder"
           rows="1"
           v-model="messageText"
           @keydown="handleKeydown"
           ref="textareaRef"
+          :disabled="!chatStore.isConnected"
       ></textarea>
     </label>
     <button
         class="action-btn send-btn"
         @click="handleSend"
         aria-label="发送"
+        :disabled="!chatStore.isConnected || !messageText.trim()"
     >
       <i data-feather="send"></i>
     </button>
@@ -29,7 +32,7 @@
 </template>
 
 <script setup>
-import {ref, nextTick, onMounted, onUnmounted} from 'vue'
+import {ref, computed, nextTick, onMounted, onUnmounted} from 'vue'
 import {useChatStore} from '@/stores/chat'
 import {useCharacterStore} from '@/stores/character'
 import {ModernMicrophoneStreamer} from '@/utils/ModernMicrophoneStreamer'
@@ -50,16 +53,20 @@ const messageText = ref('')
 const isRecording = ref(false)
 const textareaRef = ref(null)
 
+// 动态占位符：根据连接状态显示不同提示
+const inputPlaceholder = computed(() => {
+  if (!chatStore.isConnected) {
+    return '正在连接角色...'
+  }
+  return '输入或用语音命名...'
+})
+
 // 使用现代 AudioWorklet 的麦克风录音器
 const microphoneStreamer = new ModernMicrophoneStreamer()
 
 // 设置音频数据处理回调
 microphoneStreamer.onAudioData((pcmData) => {
-  if (chatStore.isConnected) {
-    chatStore.sendMessage(pcmData, { ttsEnabled: props.ttsEnabled })
-  } else {
-    console.warn('WebSocket未连接，无法发送音频数据')
-  }
+  chatStore.sendAudioData(pcmData)
 })
 
 const handleMicClick = async () => {
@@ -104,6 +111,14 @@ const sendTextMessage = () => {
   const text = messageText.value.trim()
   if (!text || !characterStore.activeCharacterId) {
     return
+  }
+
+  // 初始化音频播放器（满足浏览器自动播放策略）
+  try {
+    chatStore.audioPlayer.initialize()
+    console.log('音频播放器已初始化（发送消息时）')
+  } catch (error) {
+    console.error('音频播放器初始化失败:', error)
   }
 
   // 添加用户消息到聊天记录
@@ -153,6 +168,12 @@ onUnmounted(() => {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* 禁用状态：降低透明度，给用户明确的视觉暗示 */
+.user-input-area.disabled {
+  opacity: 0.6;
 }
 
 .user-input-area label {
@@ -173,6 +194,11 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+/* 禁用状态的输入框样式 */
+.user-input-area .input-field:disabled {
+  cursor: not-allowed;
+}
+
 .user-input-area .action-btn {
   display: flex;
   align-items: center;
@@ -185,7 +211,13 @@ onUnmounted(() => {
   transition: background-color 0.2s ease;
 }
 
-.user-input-area .action-btn:hover {
+/* 禁用状态的按钮样式 */
+.user-input-area .action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.user-input-area .action-btn:hover:not(:disabled) {
   background-color: var(--border-color);
 }
 
@@ -194,7 +226,7 @@ onUnmounted(() => {
   color: white;
 }
 
-.user-input-area .send-btn:hover {
+.user-input-area .send-btn:hover:not(:disabled) {
   background-color: var(--accent-hover);
 }
 

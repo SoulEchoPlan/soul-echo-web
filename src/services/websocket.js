@@ -16,6 +16,7 @@ class WebSocketService {
     this.PONG_TIMEOUT = 5000           // pong 超时时间：5秒
     this.currentCharacter = null       // 保存当前连接的角色，用于重连
     this.isManualDisconnect = false    // 标记是否为手动断开
+    this.isSwitching = false           // 标记是否正在切换连接
   }
 
   async connect(character) {
@@ -26,6 +27,12 @@ class WebSocketService {
     // 保存当前角色信息，用于重连
     this.currentCharacter = character
     this.isManualDisconnect = false
+
+    // 如果存在旧连接，标记为切换状态并断开
+    if (this.socket) {
+      this.isSwitching = true
+      console.log('检测到旧连接，准备切换到新角色:', character.id)
+    }
 
     // 先断开现有连接
     this.disconnect()
@@ -41,6 +48,8 @@ class WebSocketService {
 
         this.socket.onopen = () => {
           console.log(`WebSocket连接已建立，角色ID: ${character.id}`)
+          // 连接成功后，清除切换标记
+          this.isSwitching = false
           // 启动心跳机制
           this.startHeartbeat()
           resolve()
@@ -92,12 +101,25 @@ class WebSocketService {
           reject(error)
         }
 
-        this.socket.onclose = () => {
-          console.log('WebSocket连接已关闭')
+        this.socket.onclose = (event) => {
           // 停止心跳
           this.stopHeartbeat()
-          if (this.connectionHandler) {
-            this.connectionHandler(false)
+
+          // 如果是切换状态或者是正常关闭（Code 1000），不触发连接错误处理
+          if (this.isSwitching || event.code === 1000) {
+            console.log('WebSocket正常关闭（切换角色或主动断开），Code:', event.code)
+          } else {
+            // 只有非预期的关闭才触发连接错误处理
+            console.log('WebSocket意外断开，Code:', event.code)
+            if (this.connectionHandler) {
+              this.connectionHandler(false)
+            }
+          }
+
+          // 只有在非切换状态时才将 socket 置为 null
+          // 这样在切换过程中，socket 对象仍然存在，避免竞态条件
+          if (!this.isSwitching) {
+            this.socket = null
           }
         }
 
@@ -109,13 +131,23 @@ class WebSocketService {
   }
 
   disconnect() {
-    this.isManualDisconnect = true  // 标记为手动断开
-    this.stopHeartbeat()             // 停止心跳
+    this.isSwitching = true           // 标记为切换状态
+    this.isManualDisconnect = true    // 标记为手动断开
+    this.stopHeartbeat()              // 停止心跳
     if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
       this.socket.close()
       this.socket = null
     }
     this.currentCharacter = null
+  }
+
+  /**
+   * 重置切换状态
+   * 用于异常情况下强制重置状态位
+   */
+  resetState() {
+    this.isSwitching = false
+    console.log('WebSocket切换状态已重置')
   }
 
   send(message) {

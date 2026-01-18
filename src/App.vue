@@ -7,6 +7,13 @@
 
       <RouterView />
     </div>
+
+    <!-- 全局 Toast 组件 -->
+    <ToastMessage
+      :visible="toastStore.visible"
+      :message="toastStore.message"
+      :type="toastStore.type"
+    />
   </div>
 </template>
 
@@ -14,10 +21,12 @@
 import { ref, computed, onMounted } from 'vue'
 import TheHeader from './components/TheHeader.vue'
 import NavSidebar from './components/NavSidebar.vue' // 引入新导航
-// CharacterList 和 ChatPanel 不再由 App.vue 直接管理
+import ToastMessage from './components/common/ToastMessage.vue'
+import { useToastStore } from './stores/toast'
 import { useCharacterStore } from './stores/character'
 
 const characterStore = useCharacterStore()
+const toastStore = useToastStore()
 const currentTheme = ref('dark')
 const themeClass = computed(() => `${currentTheme.value}-mode`)
 
@@ -46,7 +55,9 @@ onMounted(() => {
     currentTheme.value = 'light'
     document.body.classList.add('light-mode')
   }
-  // characterStore.fetchCharacters() // 这个逻辑被 CharacterList.vue 自己管理了，App.vue 不再需要它
+
+  // 将 Toast Store 挂载到全局 window 对象，方便在非组件文件中调用
+  window.$toast = toastStore
 })
 </script>
 

@@ -31,6 +31,8 @@ export const useChatStore = defineStore('chat', {
         return
       }
 
+      // 重置连接状态，表示正在建立新连接
+      this.isConnected = false
       this.isConnecting = true
       try {
         await websocketService.connect(character)
@@ -85,6 +87,28 @@ export const useChatStore = defineStore('chat', {
         return true
       } catch (error) {
         console.error('发送消息失败:', error)
+        return false
+      }
+    },
+
+    /**
+     * 发送二进制音频数据
+     * @param {Blob|ArrayBuffer} data - 二进制音频数据
+     * @returns {boolean} 发送是否成功
+     */
+    sendAudioData(data) {
+      if (!this.isConnected) {
+        console.warn('WebSocket未连接，无法发送音频数据')
+        return false
+      }
+
+      try {
+        // 直接发送二进制数据，不要 JSON.stringify
+        websocketService.send(data)
+        console.log('音频数据已发送:', data instanceof Blob ? `${data.size} bytes (Blob)` : `${data.byteLength} bytes (ArrayBuffer)`)
+        return true
+      } catch (error) {
+        console.error('发送音频数据失败:', error)
         return false
       }
     },
@@ -150,9 +174,23 @@ export const useChatStore = defineStore('chat', {
 
     // 处理接收到的WebSocket消息
     handleIncomingMessage(event, characterId) {
+      // 调试日志：记录消息类型和数据大小
+      const dataType = typeof event.data
+      const dataSize = event.data instanceof ArrayBuffer
+        ? `${event.data.byteLength} bytes (ArrayBuffer)`
+        : event.data instanceof Blob
+          ? `${event.data.size} bytes (Blob)`
+          : `${event.data.length} chars (String)`
+
+      console.log('🔍 [WebSocket] 收到消息:', {
+        type: dataType,
+        size: dataSize,
+        characterId
+      })
+
       if (event.data instanceof ArrayBuffer) {
         // 处理二进制音频数据 - 使用流式播放器
-        console.log('收到音频数据块:', event.data.byteLength, 'bytes')
+        console.log('[音频] 收到音频数据块:', event.data.byteLength, 'bytes')
         this.audioPlayer.receive(event.data)
         return
       }
@@ -173,8 +211,23 @@ export const useChatStore = defineStore('chat', {
 
         // 处理结构化错误消息
         if (jsonData.type === MessageTypes.ERROR) {
-          console.error('收到错误消息:', jsonData.content)
-          this.addErrorMessage(jsonData.content || '发生未知错误', characterId)
+          // 检查 TTS 熔断信号
+          if (jsonData.code === 'TTS_BROKEN') {
+            console.warn('检测到 TTS 熔断信号')
+            window.$toast('语音服务已到期，已切换至文字模式', 'error')
+            return
+          }
+
+          const errorContent = jsonData.content || '发生未知错误'
+
+          // 检测 TTS/语音服务错误
+          if (errorContent.includes('TTS') || errorContent.includes('语音')) {
+            console.warn('语音服务熔断，仅显示文本')
+          } else {
+            console.error('收到错误消息:', errorContent)
+          }
+
+          this.addErrorMessage(errorContent, characterId)
           return
         }
 
@@ -235,16 +288,16 @@ export const useChatStore = defineStore('chat', {
               ...lastMessage,
               isComplete: true
             }
-            console.log('✅ AI消息流完成，已移除光标')
+            console.log('AI消息流完成，已移除光标')
           } else {
-            console.log('⚠️ 最后一条消息状态异常:', {
+            console.log('最后一条消息状态异常:', {
               type: lastMessage?.type,
               isComplete: lastMessage?.isComplete,
               hasMessages: messages.length > 0
             })
           }
         } else {
-          console.log('⚠️ 没有找到消息历史')
+          console.log('没有找到消息历史')
         }
 
         return
