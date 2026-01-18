@@ -31,6 +31,8 @@ export const useChatStore = defineStore('chat', {
         return
       }
 
+      // 重置连接状态，表示正在建立新连接
+      this.isConnected = false
       this.isConnecting = true
       try {
         await websocketService.connect(character)

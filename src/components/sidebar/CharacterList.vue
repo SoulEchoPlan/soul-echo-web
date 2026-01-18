@@ -45,10 +45,7 @@ const handleSelect = async (characterId) => {
   if (previousCharacterId !== characterId) {
     const activeCharacter = characterStore.activeCharacter
 
-    // 断开现有连接
-    chatStore.disconnect()
-
-    // 建立新连接
+    // 直接调用 connect，内部会自动处理旧连接的无感关闭
     try {
       await chatStore.connect(activeCharacter)
     } catch (error) {
