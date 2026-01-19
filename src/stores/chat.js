@@ -113,6 +113,31 @@ export const useChatStore = defineStore('chat', {
       }
     },
 
+    /**
+     * 更新TTS状态（用于语音输入前同步TTS开关状态）
+     * @param {boolean} ttsEnabled - 是否启用TTS
+     * @returns {boolean} 发送是否成功
+     */
+    updateTtsState(ttsEnabled) {
+      if (!this.isConnected) {
+        console.warn('WebSocket未连接，无法更新TTS状态')
+        return false
+      }
+
+      try {
+        // 发送纯TTS状态更新消息（不包含文本内容）
+        const payload = {
+          ttsEnabled: ttsEnabled
+        }
+        websocketService.send(JSON.stringify(payload))
+        console.log('[TTS状态更新] 已发送TTS状态:', ttsEnabled)
+        return true
+      } catch (error) {
+        console.error('更新TTS状态失败:', error)
+        return false
+      }
+    },
+
     addMessage(message, characterId) {
       if (!this.conversations[characterId]) {
         this.conversations[characterId] = []
