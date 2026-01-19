@@ -85,6 +85,14 @@ const handleMicClick = async () => {
     } catch (error) {
       console.error('[ChatInput] 音频播放器初始化失败:', error)
     }
+
+    // 关键修复：在开始录音前先发送TTS状态更新消息
+    const ttsUpdateSuccess = chatStore.updateTtsState(props.ttsEnabled)
+    if (ttsUpdateSuccess) {
+      console.log('[ChatInput] TTS状态已更新到后端:', props.ttsEnabled)
+    } else {
+      console.warn('[ChatInput] TTS状态更新失败，但继续录音流程')
+    }
   }
 
   if (isRecording.value) {
