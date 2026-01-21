@@ -284,7 +284,7 @@ const handleReconnect = async () => {
 .message.ai .message-content :deep(em),
 .message.ai .message-content :deep(i) {
   font-style: italic; /* 恢复倾斜样式 */
-  color: #6b7280; /* 使用灰色表示动作/旁白，与对话内容区分 */
+  color: var(--text-muted); /* 使用主题变量表示动作/旁白，与对话内容区分 */
   font-family: "KaiTi", "STKaiti", "楷体", serif; /* 使用楷体/衬线体营造小说旁白感 */
   padding: 0 4px; /* 增加微小间距，视觉上更舒适 */
 }

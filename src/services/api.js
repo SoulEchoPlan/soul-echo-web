@@ -104,6 +104,17 @@ class ApiService {
   // ==================== 知识库相关 API ====================
 
   /**
+   * 初始化角色的知识库
+   * @param {string} characterId - 角色 ID
+   * @returns {Promise<any>} 初始化结果
+   */
+  async initKnowledgeBase(characterId) {
+    return await this.request(`/characters/${characterId}/knowledge-base`, {
+      method: 'POST'
+    })
+  }
+
+  /**
    * 上传知识库文件
    * @param {File} file - 文件对象
    * @param {string} characterId - 角色 ID

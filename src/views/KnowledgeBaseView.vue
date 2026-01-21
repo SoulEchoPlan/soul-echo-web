@@ -8,7 +8,7 @@
       </div>
 
       <!-- 角色选择 -->
-      <div class="character-selector">
+      <div class="selector-wrapper">
         <label for="kb-character-select" class="selector-label">选择要管理的角色</label>
         <select
           id="kb-character-select"
@@ -109,7 +109,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useCharacterStore } from '@/stores/character'
 import { api } from '@/services/api'
 import { UploadCloud, Trash2 } from 'lucide-vue-next'
@@ -123,6 +123,11 @@ const selectedCharacterId = ref(characterStore.activeCharacterId)
 const knowledgeFiles = ref([])
 const isDragOver = ref(false)
 const fileInput = ref(null)
+
+// 计算属性：当前选中的角色
+const selectedCharacter = computed(() => {
+  return characterStore.characters.find(char => char.id === selectedCharacterId.value)
+})
 
 // 获取文件类型徽章样式
 const getFileBadgeClass = (fileName) => {
@@ -192,8 +197,15 @@ const handleFileUpload = async (file) => {
   }
 
   try {
+    console.log('正在上传并同步知识库，请稍候...')
+
     await api.uploadKnowledgeFile(file, selectedCharacterId.value)
     console.log('文件上传成功')
+
+    // 刷新角色数据，因为 knowledgeIndexId 可能已更新
+    await characterStore.refreshCharacter(selectedCharacterId.value)
+
+    // 重新获取文件列表
     await fetchKnowledgeFiles()
   } catch (error) {
     const errorMsg = getErrorMessage(error)
@@ -294,8 +306,8 @@ onMounted(async () => {
   margin-bottom: 0;
 }
 
-/* 角色选择器 */
-.character-selector {
+/* === 角色选择包装器 === */
+.selector-wrapper {
   margin-bottom: 1.5rem;
 }
 
@@ -316,6 +328,7 @@ onMounted(async () => {
   padding: 0.5rem 0.75rem;
   color: var(--text-color);
   font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .character-select:focus {
@@ -366,6 +379,14 @@ onMounted(async () => {
   font-size: 0.75rem;
   opacity: 0.7;
   margin-bottom: 1rem;
+}
+
+.upload-info {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-bottom: 1rem;
+  font-style: italic;
 }
 
 .file-input {

@@ -27,20 +27,28 @@ export class ModernMicrophoneStreamer {
 
   async start() {
     if (this.isRecording) {
+      console.log('🎤 [MicrophoneStreamer] 已在录音状态，忽略重复启动');
       return;
     }
 
     try {
+      console.log('[MicrophoneStreamer] 开始启动录音...');
+
       const stream = await this.initializeStream();
+      console.log('[MicrophoneStreamer] 麦克风权限获取成功');
 
       // 创建 AudioContext
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      console.log('[MicrophoneStreamer] AudioContext创建成功，采样率:', this.audioContext.sampleRate);
 
       // 创建 MediaStreamSource
       this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream);
+      console.log('[MicrophoneStreamer] MediaStreamSource创建成功');
 
       // 加载 AudioWorklet
+      console.log('[MicrophoneStreamer] 开始加载AudioWorklet...');
       await this.audioContext.audioWorklet.addModule('/audio-worklet/microphone-processor.js');
+      console.log('[MicrophoneStreamer] AudioWorklet加载成功');
 
       // 创建 AudioWorkletNode
       this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'microphone-processor', {
@@ -49,10 +57,19 @@ export class ModernMicrophoneStreamer {
         }
       });
 
+      let audioDataCount = 0;
       // 监听来自 AudioWorklet 的消息
       this.audioWorkletNode.port.onmessage = (event) => {
-        if (event.data.type === 'AUDIO_DATA' && this.onAudioDataCallback) {
-          this.onAudioDataCallback(event.data.data);
+        if (event.data.type === 'AUDIO_DATA') {
+          audioDataCount++;
+          if (audioDataCount % 100 === 0) {
+            console.log(`[MicrophoneStreamer] 收到音频数据包 #${audioDataCount}, 大小: ${event.data.data.byteLength} bytes`);
+          }
+          if (this.onAudioDataCallback) {
+            this.onAudioDataCallback(event.data.data);
+          } else {
+            console.error('[MicrophoneStreamer] onAudioDataCallback未设置！');
+          }
         }
       };
 
@@ -72,9 +89,11 @@ export class ModernMicrophoneStreamer {
         type: 'UPDATE_RECORDING_STATE',
         isRecording: true
       });
+      console.log('[MicrophoneStreamer] 已发送UPDATE_RECORDING_STATE(isRecording=true)');
+      console.log('[MicrophoneStreamer] 录音启动完成！');
 
     } catch (error) {
-      console.error('启动录音失败:', error);
+      console.error('[MicrophoneStreamer] 启动录音失败:', error);
       throw new Error('无法获取麦克风权限，请检查浏览器设置并重试。');
     }
   }
