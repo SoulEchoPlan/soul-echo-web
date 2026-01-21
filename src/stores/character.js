@@ -102,6 +102,25 @@ export const useCharacterStore = defineStore('character', {
       return this.characters.filter(char =>
         char.name.toLowerCase().includes(term)
       )
+    },
+
+    /**
+     * 更新单个角色的数据
+     * 用于知识库初始化后刷新角色的 knowledgeIndexId 等字段
+     * @param {string} characterId - 角色 ID
+     */
+    async refreshCharacter(characterId) {
+      try {
+        const updatedCharacter = await api.getCharacter(characterId)
+        const index = this.characters.findIndex(char => char.id === characterId)
+        if (index !== -1) {
+          this.characters[index] = updatedCharacter
+        }
+        return updatedCharacter
+      } catch (error) {
+        console.error('刷新角色数据失败:', error)
+        throw error
+      }
     }
   }
 })
