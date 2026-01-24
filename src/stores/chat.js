@@ -207,7 +207,7 @@ export const useChatStore = defineStore('chat', {
           ? `${event.data.size} bytes (Blob)`
           : `${event.data.length} chars (String)`
 
-      console.log('🔍 [WebSocket] 收到消息:', {
+      console.log('[WebSocket] 收到消息:', {
         type: dataType,
         size: dataSize,
         characterId

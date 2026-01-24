@@ -27,7 +27,7 @@ export class ModernMicrophoneStreamer {
 
   async start() {
     if (this.isRecording) {
-      console.log('🎤 [MicrophoneStreamer] 已在录音状态，忽略重复启动');
+      console.log('[MicrophoneStreamer] 已在录音状态，忽略重复启动');
       return;
     }
 

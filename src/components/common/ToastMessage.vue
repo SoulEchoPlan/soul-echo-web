@@ -33,9 +33,9 @@ const props = defineProps({
 // 根据类型显示不同的图标
 const icon = computed(() => {
   const iconMap = {
-    info: 'ℹ️',
+    info: 'i',
     success: '✓',
-    warning: '⚠️',
+    warning: '!',
     error: '✕'
   }
   return iconMap[props.type] || iconMap.info
